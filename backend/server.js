@@ -85,6 +85,11 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Broadcast an already-saved image message (uploaded via REST API)
+  socket.on('broadcast_image', (data) => {
+    socket.to(data.room).emit('receive_message', data);
+  });
+
   // Typing indicators
   socket.on('typing', (data) => {
     socket.to(data.room).emit('display_typing', data);
