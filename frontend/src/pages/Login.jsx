@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MessageSquare, UserPlus, LogIn, KeyRound } from 'lucide-react';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://aura-app-keg8.onrender.com/api';
 
 const Login = () => {
   const [view, setView] = useState('login'); // 'login', 'register', 'forgot'

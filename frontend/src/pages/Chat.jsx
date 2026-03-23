@@ -4,8 +4,8 @@ import { io } from 'socket.io-client';
 import { Send, LogOut, Users, Settings, Hash, MoreVertical, Menu, X } from 'lucide-react';
 import axios from 'axios';
 
-const SOCKET_URL = 'http://localhost:5000';
-const API_URL = 'http://localhost:5000/api';
+const SOCKET_URL = 'https://aura-app-keg8.onrender.com';
+const API_URL = 'https://aura-app-keg8.onrender.com/api';
 
 const Chat = () => {
   const { state } = useLocation();
