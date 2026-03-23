@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Hash, Plus, Trash2, LogOut, Search, MessageCircle, X } from 'lucide-react';
+import { Hash, Plus, Trash2, LogOut, Search, MessageCircle, X, User } from 'lucide-react';
 import axios from 'axios';
 
 const API_URL = 'https://aura-app-keg8.onrender.com/api';
@@ -100,9 +100,14 @@ const Rooms = () => {
             <h1 style={{ fontSize: '1.75rem', fontWeight: '700' }}>Aura</h1>
             <p style={{ color: 'var(--text-secondary)' }}>Welcome back, {username}</p>
           </div>
-          <button onClick={handleLogout} className="btn-primary" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.2)', boxShadow: 'none' }}>
-            <LogOut size={18} /> Logout
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={() => navigate('/profile')} style={{ background: 'rgba(99,102,241,0.1)', color: 'var(--primary-accent)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500' }}>
+              <User size={16} /> Profile
+            </button>
+            <button onClick={handleLogout} className="btn-primary" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.2)', boxShadow: 'none' }}>
+              <LogOut size={18} /> Logout
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}

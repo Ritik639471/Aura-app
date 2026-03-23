@@ -33,7 +33,8 @@ router.post('/', requireAuth, async (req, res) => {
     const newRoom = new Room({
       name,
       creator: req.user.id,
-      members: [req.user.id] // Creator is the first member
+      members: [req.user.id],
+      admins: [req.user.id]  // Creator is always an admin
     });
     
     await newRoom.save();
@@ -117,6 +118,39 @@ router.post('/dm/:username', requireAuth, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error creating DM' });
+  }
+});
+
+// Make a member an admin (creator only)
+router.post('/:id/make-admin', requireAuth, async (req, res) => {
+  try {
+    const room = await Room.findById(req.params.id);
+    if (!room) return res.status(404).json({ error: 'Room not found' });
+    if (room.creator.toString() !== req.user.id) return res.status(403).json({ error: 'Creator only' });
+    const { userId: targetUserId } = req.body;
+    if (!room.members.includes(targetUserId)) return res.status(400).json({ error: 'User is not a member' });
+    if (!room.admins.includes(targetUserId)) {
+      room.admins.push(targetUserId);
+      await room.save();
+    }
+    const updated = await Room.findById(req.params.id).populate('creator', 'username').populate('members', 'username').populate('admins', 'username');
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Remove admin (creator only)
+router.delete('/:id/remove-admin', requireAuth, async (req, res) => {
+  try {
+    const room = await Room.findById(req.params.id);
+    if (!room || room.creator.toString() !== req.user.id) return res.status(403).json({ error: 'Creator only' });
+    const { userId: targetUserId } = req.body;
+    room.admins = room.admins.filter(a => a.toString() !== targetUserId);
+    await room.save();
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
   }
 });
 

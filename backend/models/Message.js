@@ -26,7 +26,10 @@ const MessageSchema = new mongoose.Schema({
     emoji: String,
     users: [String]
   }],
-  readBy: [{ type: String }]
+  readBy: [{ type: String }],
+  edited: { type: Boolean, default: false },
+  pinned: { type: Boolean, default: false },
+  deletedAt: { type: Date, default: null }
 }, { timestamps: true });
 
 export default mongoose.model('Message', MessageSchema);

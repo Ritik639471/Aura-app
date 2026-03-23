@@ -8,6 +8,8 @@ import authRoutes from './routes/auth.js';
 import roomRoutes from './routes/room.js';
 import messageRoutes from './routes/message.js';
 import uploadRoutes from './routes/upload.js';
+import profileRoutes from './routes/profile.js';
+import linkPreviewRoutes from './routes/linkpreview.js';
 import Message from './models/Message.js';
 
 dotenv.config();
@@ -42,6 +44,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/linkpreview', linkPreviewRoutes);
 
 // Store active users per room
 const activeUsers = {};
@@ -116,6 +120,26 @@ io.on('connection', (socket) => {
       await msg.save();
       io.to(msg.room).emit('reaction_updated', { messageId, reactions: msg.reactions });
     } catch (err) { console.error(err); }
+  });
+
+  // Message edit (broadcast to room)
+  socket.on('message_edited', (data) => {
+    socket.to(data.room).emit('message_edited', data);
+  });
+
+  // Message delete (broadcast to room)
+  socket.on('message_deleted', (data) => {
+    io.to(data.room).emit('message_deleted', { messageId: data.messageId });
+  });
+
+  // Message pinned (broadcast to room)
+  socket.on('message_pinned', (data) => {
+    io.to(data.room).emit('message_pinned', data);
+  });
+
+  // Room cleared (broadcast to room)
+  socket.on('room_cleared', (data) => {
+    io.to(data.room).emit('room_cleared');
   });
 
   // Read receipts

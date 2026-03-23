@@ -29,7 +29,11 @@ const UserSchema = new mongoose.Schema({
   resetPasswordExpires: {
     type: Date,
     default: null
-  }
+  },
+  avatar: { type: String, default: null },
+  bio: { type: String, default: '', maxlength: 160 },
+  status: { type: String, default: '👋 Hey there!', maxlength: 80 },
+  role: { type: String, enum: ['user', 'superadmin'], default: 'user' }
 }, { timestamps: true });
 
 // Hash password before saving
