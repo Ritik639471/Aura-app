@@ -5,6 +5,9 @@ import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import Message from '../models/Message.js';
 import { requireAuth } from '../middleware/auth.js';
 
+const router = express.Router();
+
+// Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -19,33 +22,47 @@ const storage = new CloudinaryStorage({
   }
 });
 
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB limit
+const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
-const router = express.Router();
+// Health check for the upload route
+router.get('/', (req, res) => {
+  res.json({ status: 'Upload route is active' });
+});
 
-// Upload image and create a message
-router.post('/upload', requireAuth, upload.single('image'), async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+// Upload image
+router.post('/', requireAuth, (req, res) => {
+  // Manually call multer to catch errors
+  upload.single('image')(req, res, async (err) => {
+    if (err) {
+      console.error('Multer error:', err);
+      return res.status(400).json({ error: `Upload error: ${err.message}` });
+    }
 
-    const { room } = req.body;
-    const imageUrl = req.file.path;
+    try {
+      if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
-    const newMessage = new Message({
-      room,
-      author: req.user.username,
-      message: '',
-      imageUrl,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      readBy: [req.user.username]
-    });
-    await newMessage.save();
+      const { room } = req.body;
+      if (!room) return res.status(400).json({ error: 'Room is required' });
 
-    res.json({ message: 'Image uploaded successfully', data: newMessage });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Image upload failed' });
-  }
+      const imageUrl = req.file.path;
+
+      const newMessage = new Message({
+        room,
+        author: req.user.username,
+        message: '',
+        imageUrl,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        readBy: [req.user.username],
+        reactions: []
+      });
+      await newMessage.save();
+
+      res.json({ message: 'Image uploaded successfully', data: newMessage });
+    } catch (saveErr) {
+      console.error('Save error:', saveErr);
+      res.status(500).json({ error: 'Failed to save message' });
+    }
+  });
 });
 
 export default router;
