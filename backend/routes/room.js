@@ -1,13 +1,19 @@
 import express from 'express';
 import Room from '../models/Room.js';
+import User from '../models/User.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Get all rooms
+// Get all rooms (Public + My DMs)
 router.get('/', requireAuth, async (req, res) => {
   try {
-    const rooms = await Room.find().populate('creator', 'username');
+    const rooms = await Room.find({
+      $or: [
+        { isDirectMessage: { $ne: true } },
+        { isDirectMessage: true, members: req.user.id }
+      ]
+    }).populate('creator', 'username').populate('members', 'username');
     res.json(rooms);
   } catch (error) {
     res.status(500).json({ error: 'Server error fetching rooms' });
@@ -26,7 +32,8 @@ router.post('/', requireAuth, async (req, res) => {
 
     const newRoom = new Room({
       name,
-      creator: req.user.id
+      creator: req.user.id,
+      members: [req.user.id] // Creator is the first member
     });
     
     await newRoom.save();
@@ -54,6 +61,62 @@ router.delete('/:id', requireAuth, async (req, res) => {
     res.json({ message: 'Room deleted successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Server error deleting room' });
+  }
+});
+
+// Join a room
+router.post('/:id/join', requireAuth, async (req, res) => {
+  try {
+    const room = await Room.findById(req.params.id);
+    if (!room) return res.status(404).json({ error: 'Room not found' });
+
+    if (room.members.includes(req.user.id)) {
+      return res.status(400).json({ error: 'Already a member' });
+    }
+
+    room.members.push(req.user.id);
+    await room.save();
+    
+    // Return dynamically populated room
+    const updatedRoom = await Room.findById(req.params.id).populate('creator', 'username').populate('members', 'username');
+    res.json(updatedRoom);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error joining room' });
+  }
+});
+
+// Start a Direct Message
+router.post('/dm/:username', requireAuth, async (req, res) => {
+  try {
+    const targetUser = await User.findOne({ username: req.params.username });
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+    
+    if (targetUser._id.toString() === req.user.id) {
+      return res.status(400).json({ error: 'Cannot DM yourself' });
+    }
+
+    // Check if DM room already exists
+    let dmRoom = await Room.findOne({
+      isDirectMessage: true,
+      members: { $all: [req.user.id, targetUser._id] }
+    });
+
+    if (!dmRoom) {
+      const roomName = `DM-${Math.random().toString(36).substring(2, 10)}`;
+      dmRoom = new Room({
+        name: roomName,
+        creator: req.user.id,
+        members: [req.user.id, targetUser._id],
+        isDirectMessage: true
+      });
+      await dmRoom.save();
+    }
+
+    const populatedRoom = await Room.findById(dmRoom._id).populate('members', 'username');
+    res.json(populatedRoom);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error creating DM' });
   }
 });
 

@@ -12,12 +12,21 @@ const MessageSchema = new mongoose.Schema({
   },
   message: {
     type: String,
-    required: true
+    default: ''
+  },
+  imageUrl: {
+    type: String,
+    default: null
   },
   time: {
     type: String,
     required: true
-  }
+  },
+  reactions: [{
+    emoji: String,
+    users: [String]
+  }],
+  readBy: [{ type: String }]
 }, { timestamps: true });
 
 export default mongoose.model('Message', MessageSchema);

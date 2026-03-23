@@ -2,11 +2,21 @@ import express from 'express';
 import Message from '../models/Message.js';
 import { requireAuth } from '../middleware/auth.js';
 
+import Room from '../models/Room.js';
+
 const router = express.Router();
 
 // Get messages for a specific room
 router.get('/:roomName', requireAuth, async (req, res) => {
   try {
+    const room = await Room.findOne({ name: req.params.roomName });
+    if (!room) return res.status(404).json({ error: 'Room not found' });
+    
+    // Strict Verification: Check if user is inside the members array
+    if (!room.members.includes(req.user.id)) {
+      return res.status(403).json({ error: 'You must join the room first to see messages' });
+    }
+
     const messages = await Message.find({ room: req.params.roomName })
       .sort({ createdAt: 1 }) // oldest first
       .limit(100); // Only load last 100 messages for now

@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import roomRoutes from './routes/room.js';
 import messageRoutes from './routes/message.js';
+import uploadRoutes from './routes/upload.js';
 import Message from './models/Message.js';
 
 dotenv.config();
@@ -40,15 +41,29 @@ app.use('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/upload', uploadRoutes);
+
+// Store active users per room
+const activeUsers = {};
 
 // Socket.io Connection
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
   // Basic join room
-  socket.on('join_room', (room) => {
+  socket.on('join_room', ({ room, username }) => {
     socket.join(room);
-    console.log(`User ${socket.id} joined room ${room}`);
+    socket.data.username = username;
+    socket.data.room = room;
+
+    if (!activeUsers[room]) {
+      activeUsers[room] = new Set();
+    }
+    activeUsers[room].add(username);
+
+    // Broadcast updated user list to everyone in the room
+    io.to(room).emit('room_users', Array.from(activeUsers[room]));
+    console.log(`User ${username} joined room ${room}`);
   });
 
   // Basic message handling
@@ -79,7 +94,50 @@ io.on('connection', (socket) => {
     socket.to(data.room).emit('hide_typing', data);
   });
 
+  // Message reactions
+  socket.on('toggle_reaction', async ({ messageId, emoji, username }) => {
+    try {
+      const msg = await Message.findById(messageId);
+      if (!msg) return;
+      const existing = msg.reactions.find(r => r.emoji === emoji);
+      if (existing) {
+        const idx = existing.users.indexOf(username);
+        if (idx > -1) existing.users.splice(idx, 1);
+        else existing.users.push(username);
+        if (existing.users.length === 0) msg.reactions = msg.reactions.filter(r => r.emoji !== emoji);
+      } else {
+        msg.reactions.push({ emoji, users: [username] });
+      }
+      await msg.save();
+      io.to(msg.room).emit('reaction_updated', { messageId, reactions: msg.reactions });
+    } catch (err) { console.error(err); }
+  });
+
+  // Read receipts
+  socket.on('mark_read', async ({ room, username }) => {
+    try {
+      await Message.updateMany(
+        { room, readBy: { $ne: username } },
+        { $push: { readBy: username } }
+      );
+      socket.to(room).emit('messages_read', { username, room });
+    } catch (err) { console.error(err); }
+  });
+
+  socket.on('leave_room', ({ room, username }) => {
+    socket.leave(room);
+    if (activeUsers[room]) {
+      activeUsers[room].delete(username);
+      io.to(room).emit('room_users', Array.from(activeUsers[room]));
+    }
+  });
+
   socket.on('disconnect', () => {
+    const { room, username } = socket.data;
+    if (room && activeUsers[room]) {
+      activeUsers[room].delete(username);
+      io.to(room).emit('room_users', Array.from(activeUsers[room]));
+    }
     console.log(`User disconnected: ${socket.id}`);
   });
 });
