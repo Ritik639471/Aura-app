@@ -117,10 +117,10 @@ body {
 /* Responsiveness */
 .chat-wrapper {
   width: 100vw;
-  height: 100vh;
+  height: calc(100vh - 64px); /* Subtract header height */
   display: flex;
-  gap: 20px;
-  padding: 20px;
+  gap: 0;
+  padding: 0;
   overflow: hidden;
   position: relative;
 }

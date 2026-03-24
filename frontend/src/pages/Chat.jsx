@@ -52,6 +52,9 @@ const Chat = () => {
   const [roomAdmins, setRoomAdmins] = useState([]);
   const [roomCreatorId, setRoomCreatorId] = useState(null);
 
+  const [unreadCount, setUnreadCount] = useState(0);
+  const notificationSound = useRef(new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3'));
+
   const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
@@ -74,6 +77,14 @@ const Chat = () => {
     s.on('receive_message', data => { 
       setMessages(prev => [...prev, data]); 
       s.emit('mark_read', { room, username }); 
+      
+      // Notify sound and unread count if scrolled up
+      if (data.author !== username) {
+        if (showScrollBottom) {
+          setUnreadCount(prev => prev + 1);
+        }
+        notificationSound.current.play().catch(() => {});
+      }
     });
     s.on('reaction_updated', ({ messageId, reactions }) => setMessages(prev => prev.map(m => m._id === messageId ? { ...m, reactions } : m)));
     s.on('message_edited', ({ messageId, message }) => setMessages(prev => prev.map(m => m._id === messageId ? { ...m, message, edited: true } : m)));
@@ -88,6 +99,7 @@ const Chat = () => {
 
   const scrollToBottom = (behavior = 'smooth') => {
     messagesEndRef.current?.scrollIntoView({ behavior });
+    setUnreadCount(0);
   };
 
   useEffect(() => {
@@ -227,26 +239,24 @@ const Chat = () => {
 
       <motion.div 
         layout
-        className="chat-main glass-panel !overflow-hidden flex flex-col"
+        className="flex-1 flex flex-col bg-slate-900/40 min-w-0"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="px-5 py-4 border-b border-white/10 flex justify-between items-center gap-4 bg-white/5 backdrop-blur-md">
+        {/* Chat Top Bar (Contextual) */}
+        <div className="px-6 py-4 border-b border-white/5 flex justify-between items-center bg-slate-900/40 backdrop-blur-md z-30">
           <div className="flex items-center gap-3 min-w-0">
-            <button className="md:hidden p-2 text-slate-300 hover:text-white" onClick={() => setIsSidebarOpen(true)}>
+            <button className="lg:hidden p-2 -ml-2 text-slate-400 hover:text-white" onClick={() => setIsSidebarOpen(true)}>
               <Menu size={20} />
             </button>
             <div className="cursor-pointer min-w-0 group" onClick={() => setShowGroupInfo(true)}>
               <div className="flex items-center gap-2">
-                <BlurText 
-                  text={isDM ? dmPartner : `#${room}`} 
-                  className="text-lg font-bold tracking-tight text-white group-hover:text-indigo-400 transition-colors" 
-                  delay={100}
-                />
+                <h2 className="text-lg font-bold tracking-tight text-white group-hover:text-indigo-400 transition-colors truncate">
+                  {isDM ? dmPartner : `#${room}`}
+                </h2>
               </div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 leading-none mt-1">
-                <span className="text-emerald-500 animate-pulse">●</span> 
-                {roomUsers.length} online <span className="opacity-30">|</span> {roomMembers.length} members
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5 leading-none mt-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> 
+                {roomUsers.length} online <span className="opacity-20">|</span> {roomMembers.length} members
               </p>
             </div>
           </div>
@@ -381,8 +391,13 @@ const Chat = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.5, y: 10 }}
               onClick={() => scrollToBottom()}
-              className="absolute bottom-24 right-8 bg-indigo-600 text-white p-3 rounded-full shadow-2xl z-40 hover:bg-indigo-500 active:scale-95 transition-all border border-white/20"
+              className="absolute bottom-24 right-8 bg-indigo-600 text-white p-3 rounded-full shadow-2xl z-40 hover:bg-indigo-500 active:scale-95 transition-all border border-white/20 flex flex-col items-center"
             >
+              {unreadCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-slate-900 shadow-lg">
+                  {unreadCount}
+                </span>
+              )}
               <ChevronDown size={24} />
             </motion.button>
           )}

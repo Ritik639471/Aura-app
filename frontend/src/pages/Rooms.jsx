@@ -13,18 +13,24 @@ import { cn } from '../utils/cn';
 const API_URL = 'https://aura-app-keg8.onrender.com/api';
 
 const Rooms = () => {
-  const [activeTab, setActiveTab] = useState('channels');
+  const { state } = useLocation();
+  const [activeTab, setActiveTab] = useState('joined');
   const [rooms, setRooms] = useState([]);
   const [newRoomName, setNewRoomName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [dmSearch, setDmSearch] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const token = localStorage.getItem('token');
   const userId = localStorage.getItem('userId');
   const username = localStorage.getItem('username');
+
+  useEffect(() => {
+    if (state?.openCreateModal) setIsCreateModalOpen(true);
+  }, [state]);
 
   useEffect(() => {
     if (!token) { navigate('/login'); return; }
@@ -93,243 +99,226 @@ const Rooms = () => {
 
   const handleLogout = () => { localStorage.clear(); navigate('/login'); };
 
-  const publicRooms = rooms.filter(r => !r.isDirectMessage && r.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const publicRooms = rooms.filter(r => !r.isDirectMessage);
+  const joinedRooms = publicRooms.filter(r => r.members?.some(m => (m._id || m) === userId));
+  const discoverRooms = publicRooms.filter(r => !r.members?.some(m => (m._id || m) === userId));
   const myDMs = rooms.filter(r => r.isDirectMessage);
 
+  const filteredJoined = joinedRooms.filter(r => r.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredDiscover = discoverRooms.filter(r => r.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
   const getDmPartner = (room) => {
-    const partner = room.members?.find(m => m._id !== userId && m.username !== username);
+    const partner = room.members?.find(m => (m._id || m) !== userId && m.username !== username);
     return partner?.username || 'Unknown';
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 overflow-y-auto">
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="glass-panel p-6 md:p-10 w-full max-w-3xl flex flex-col gap-6"
-      >
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 pb-6 gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <ShinyText text="Aura" className="text-4xl font-bold tracking-tight" speed={3} />
-            </div>
-            <BlurText 
-              text={`Welcome back, ${username}`} 
-              className="text-slate-400 mt-1" 
-              delay={50}
-              animateBy="words"
+    <div className="w-full flex flex-col items-center py-8 px-4 md:px-8 max-w-5xl mx-auto">
+      
+      <AnimatePresence>
+        {isCreateModalOpen && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+              onClick={() => setIsCreateModalOpen(false)}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-3xl p-8 shadow-2xl"
+            >
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                <Plus className="text-indigo-500" /> Create New Channel
+              </h2>
+              <form onSubmit={handleCreateRoom} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Channel Name</label>
+                  <input 
+                    autoFocus
+                    className="input-base !bg-black/20" 
+                    type="text" 
+                    placeholder="e.g. general-chat" 
+                    value={newRoomName} 
+                    onChange={(e) => setNewRoomName(e.target.value)} 
+                  />
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <button type="button" onClick={() => setIsCreateModalOpen(false)} className="flex-1 px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 font-bold transition-all">Cancel</button>
+                  <button type="submit" className="flex-1 btn-primary">Create Channel</button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <div className="w-full flex flex-col gap-8">
+        {/* Search Header */}
+        <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4">
+          <div className="w-full md:max-w-xs relative group">
+            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+            <input 
+              className="input-base !pl-12 !bg-white/5 border-none" 
+              type="text" 
+              placeholder={activeTab === 'dms' ? "Search direct messages..." : "Search channels..."}
+              value={searchQuery} 
+              onChange={(e) => setSearchQuery(e.target.value)} 
             />
           </div>
-          <div className="flex gap-3 w-full md:w-auto">
-            <button 
-              onClick={() => navigate('/profile')} 
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/25 rounded-xl px-4 py-2.5 font-medium hover:bg-indigo-500/20 transition-all"
-            >
-              <User size={18} /> Profile
-            </button>
-            <button 
-              onClick={handleLogout} 
-              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl px-4 py-2.5 font-medium hover:bg-red-500/20 transition-all"
-            >
-              <LogOut size={18} /> Logout
-            </button>
+          
+          <div className="flex p-1 bg-white/5 rounded-2xl w-full md:w-auto">
+            {['joined', 'discover', 'dms'].map(tab => (
+              <button 
+                key={tab} 
+                onClick={() => setActiveTab(tab)} 
+                className={cn(
+                  "flex-1 md:flex-none px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-300 whitespace-nowrap",
+                  activeTab === tab 
+                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30" 
+                    : "text-slate-500 hover:text-white hover:bg-white/5"
+                )}
+              >
+                {tab === 'joined' ? 'My Channels' : tab === 'discover' ? 'Discover' : 'DMs'}
+              </button>
+            ))}
           </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex p-1 bg-white/5 rounded-2xl">
-          {['channels', 'dms'].map(tab => (
-            <button 
-              key={tab} 
-              onClick={() => setActiveTab(tab)} 
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all duration-300",
-                activeTab === tab 
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30" 
-                  : "text-slate-400 hover:text-white hover:bg-white/5"
-              )}
-            >
-              {tab === 'channels' ? <Hash size={18} /> : <MessageCircle size={18} />}
-              {tab === 'channels' ? 'Channels' : 'Direct Messages'}
-            </button>
-          ))}
         </div>
 
         <AnimatePresence mode="wait">
           {error && (
             <motion.div 
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="bg-red-500/10 text-red-500 p-4 rounded-xl text-sm flex justify-between items-center"
+              initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+              className="bg-red-500/10 text-red-500 p-4 rounded-xl text-sm flex justify-between items-center border border-red-500/20"
             >
-              {error}
+              <div className="flex items-center gap-2">⚠️ {error}</div>
               <X size={18} className="cursor-pointer opacity-70 hover:opacity-100" onClick={() => setError('')} />
             </motion.div>
           )}
         </AnimatePresence>
 
-        {activeTab === 'channels' && (
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col gap-5"
-          >
-            <form onSubmit={handleCreateRoom} className="flex gap-3">
-              <input 
-                className="input-base !bg-black/20" 
-                type="text" 
-                placeholder="New channel name..." 
-                value={newRoomName} 
-                onChange={(e) => setNewRoomName(e.target.value)} 
-              />
-              <button type="submit" className="btn-primary !px-6 whitespace-nowrap">
-                <Plus size={20} /> Create
-              </button>
-            </form>
-
-            <div className="relative group">
-              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
-              <input 
-                className="input-base !pl-12 !bg-black/20" 
-                type="text" 
-                placeholder="Search channels..." 
-                value={searchQuery} 
-                onChange={(e) => setSearchQuery(e.target.value)} 
-              />
-            </div>
-
-            <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-              {loading ? (
-                Array(3).fill(0).map((_, i) => (
-                  <div key={i} className="h-20 rounded-2xl bg-white/5 animate-pulse" />
-                ))
-              ) : publicRooms.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 italic">No channels found.</div>
-              ) : (
-                publicRooms.map((room, index) => {
-                  const isMember = room.members?.some(m => m._id === userId || m === userId);
-                  return (
-                    <motion.div
-                      key={room._id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <SpotlightCard 
-                        className="!p-4 !bg-white/5 hover:!bg-white/10 cursor-pointer border-white/5 transition-all"
-                        onClick={() => handleEnterRoom(room.name, isMember)}
-                      >
-                        <div className="flex justify-between items-center w-full">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center">
-                              <Hash className="text-indigo-400" size={24} />
-                            </div>
-                            <div>
-                              <h3 className="font-bold text-lg">{room.name}</h3>
-                              <p className="text-xs text-slate-400 font-medium">
-                                <span className="text-indigo-400 inline-block mr-1">●</span>
-                                {room.members?.length || 0} members
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
-                            {!isMember ? (
-                              <button 
-                                onClick={e => handleJoinAction(room._id, e)} 
-                                className="bg-white/10 hover:bg-indigo-600 text-white rounded-lg px-4 py-2 text-sm font-semibold transition-all"
-                              >
-                                Join
-                              </button>
-                            ) : (
-                              <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-400/10 px-3 py-1.5 rounded-full uppercase tracking-wider">
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                Member
-                              </span>
-                            )}
-                            {room.creator?._id === userId && (
-                              <button 
-                                onClick={e => handleDeleteRoom(room._id, e)} 
-                                className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
-                              >
-                                <Trash2 size={20} />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </SpotlightCard>
-                    </motion.div>
-                  );
-                })
-              )}
-            </div>
-          </motion.div>
-        )}
-
-        {activeTab === 'dms' && (
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col gap-5"
-          >
-            <div className="flex gap-3">
-              <input 
-                className="input-base !bg-black/20" 
-                type="text" 
-                placeholder="Enter username to message..." 
-                value={dmSearch} 
-                onChange={e => setDmSearch(e.target.value)} 
-                onKeyDown={e => { if (e.key === 'Enter') handleStartDM(dmSearch); }} 
-              />
-              <button onClick={() => handleStartDM(dmSearch)} className="btn-primary !px-6 whitespace-nowrap">
-                Open DM
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-              {loading ? (
-                Array(3).fill(0).map((_, i) => (
-                  <div key={i} className="h-20 rounded-2xl bg-white/5 animate-pulse" />
-                ))
-              ) : myDMs.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 italic">No DMs yet. Type a username above!</div>
-              ) : (
-                myDMs.map((room, index) => {
-                  const partner = getDmPartner(room);
-                  return (
-                    <motion.div
-                      key={room._id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <SpotlightCard 
-                        className="!p-4 !bg-white/5 hover:!bg-white/10 cursor-pointer border-white/5 transition-all"
-                        onClick={() => navigate('/chat', { state: { room: room.name, isDM: true, dmPartner: partner } })}
-                      >
-                        <div className="flex items-center gap-4 w-full">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-xl font-black text-white shadow-lg shadow-indigo-500/20">
-                            {partner[0]?.toUpperCase()}
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-lg tracking-tight">{partner}</h3>
-                            <p className="text-xs text-slate-400 font-medium tracking-wide flex items-center gap-1.5 uppercase">
-                              <span className="w-2 h-2 rounded-full bg-indigo-500" />
-                              Direct Message
-                            </p>
-                          </div>
-                        </div>
-                      </SpotlightCard>
-                    </motion.div>
-                  );
-                })
-              )}
-            </div>
-          </motion.div>
-        )}
-      </motion.div>
+        {/* Room Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {loading ? (
+            Array(6).fill(0).map((_, i) => (
+              <div key={i} className="h-24 rounded-3xl bg-white/5 animate-pulse" />
+            ))
+          ) : activeTab === 'joined' ? (
+            filteredJoined.length === 0 ? (
+              <div className="col-span-full py-20 text-center flex flex-col items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-slate-600">
+                  <Hash size={32} />
+                </div>
+                <p className="text-slate-500 italic">No channels joined yet. Explore or create one!</p>
+              </div>
+            ) : (
+              filteredJoined.map((room, idx) => (
+                <RoomCard 
+                  key={room._id} room={room} userId={userId} 
+                  onClick={() => navigate('/chat', { state: { room: room.name } })}
+                  onDelete={(e) => handleDeleteRoom(room._id, e)}
+                  isMember={true}
+                />
+              ))
+            )
+          ) : activeTab === 'discover' ? (
+            filteredDiscover.length === 0 ? (
+              <div className="col-span-full py-20 text-center text-slate-500 italic">No more channels to discover.</div>
+            ) : (
+              filteredDiscover.map((room, idx) => (
+                <RoomCard 
+                  key={room._id} room={room} userId={userId} 
+                  onClick={() => handleJoinAction(room._id)}
+                  isMember={false}
+                />
+              ))
+            )
+          ) : (
+            myDMs.length === 0 ? (
+              <div className="col-span-full py-20 text-center text-slate-500 italic">No DMs yet. Start one in the header!</div>
+            ) : (
+              myDMs.map((room, idx) => {
+                const partner = getDmPartner(room);
+                return (
+                  <RoomCard 
+                    key={room._id} room={room} userId={userId} partnerName={partner}
+                    onClick={() => navigate('/chat', { state: { room: room.name, isDM: true, dmPartner: partner } })}
+                  />
+                );
+              })
+            )
+          )}
+        </div>
+      </div>
     </div>
+  );
+};
+
+const RoomCard = ({ room, userId, onClick, onDelete, isMember, partnerName }) => {
+  const isCreator = (room.creator?._id || room.creator) === userId;
+  const initial = partnerName ? partnerName[0] : room.name[0];
+  
+  return (
+    <motion.div
+      whileHover={{ y: -5, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="group"
+    >
+      <SpotlightCard 
+        className="!p-5 !bg-white/5 hover:!bg-white/10 !rounded-3xl cursor-pointer border-white/5 shadow-xl hover:shadow-indigo-500/10 transition-all flex flex-col justify-between min-h-[140px]"
+        onClick={onClick}
+      >
+        <div className="flex justify-between items-start w-full">
+          <div className="flex items-center gap-4">
+            <div className={cn(
+              "w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold shadow-inner",
+              partnerName ? "bg-gradient-to-br from-indigo-500 to-violet-600 text-white" : "bg-white/10 text-indigo-400 group-hover:bg-indigo-500/20 transition-colors"
+            )}>
+              {partnerName ? initial.toUpperCase() : <Hash size={24} />}
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-bold text-lg truncate pr-2">{partnerName || room.name}</h3>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-0.5">
+                {partnerName ? 'Direct Message' : `${room.members?.length || 0} members`}
+              </p>
+            </div>
+          </div>
+          {isCreator && onDelete && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); onDelete(e); }}
+              className="p-2 text-slate-600 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+            >
+              <Trash2 size={18} />
+            </button>
+          )}
+        </div>
+
+        <div className="mt-4 flex items-center justify-between">
+          <div className="flex -space-x-2">
+            {(room.members || []).slice(0, 3).map((m, i) => (
+              <div key={i} className="w-6 h-6 rounded-full border-2 border-slate-900 bg-slate-700 flex items-center justify-center text-[8px] font-bold overflow-hidden">
+                {m.username?.[0]?.toUpperCase() || i}
+              </div>
+            ))}
+            {(room.members?.length || 0) > 3 && (
+              <div className="w-6 h-6 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center text-[8px] font-bold">
+                +{(room.members?.length || 0) - 3}
+              </div>
+            )}
+          </div>
+          
+          <div className={cn(
+            "text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest transition-all",
+            isMember ? "bg-emerald-400/10 text-emerald-400" : "bg-indigo-600 text-white group-hover:shadow-lg group-hover:shadow-indigo-500/30"
+          )}>
+            {isMember ? 'Open Chat' : 'Join Room'}
+          </div>
+        </div>
+      </SpotlightCard>
+    </motion.div>
   );
 };
 
