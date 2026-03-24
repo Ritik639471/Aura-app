@@ -6,11 +6,11 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import MessageBubble from '../components/MessageBubble';
-import ChatSidebar from '../components/ChatSidebar';
+import MemberPanel from '../components/MemberPanel';
 import GroupInfoModal from '../components/GroupInfoModal';
 import EmojiPicker from '../components/EmojiPicker';
-import BlurText from '../components/ReactBits/BlurText';
 import { cn } from '../utils/cn';
+import { User, Info } from 'lucide-react';
 
 const SOCKET_URL = 'https://aura-app-keg8.onrender.com';
 const API_URL = 'https://aura-app-keg8.onrender.com/api';
@@ -37,13 +37,13 @@ const Chat = () => {
   const [imagePreview, setImagePreview] = useState(null);
 
   // UI state
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showPinned, setShowPinned] = useState(false);
   const [showScrollBottom, setShowScrollBottom] = useState(false);
+  const [isMemberPanelOpen, setIsMemberPanelOpen] = useState(true);
 
   // Room presence
   const [roomUsers, setRoomUsers] = useState([]);
@@ -218,8 +218,7 @@ const Chat = () => {
     : messages;
 
   return (
-    <div className="chat-wrapper" onClick={() => setShowEmojiPicker(false)}>
-      
+    <div className="flex flex-1 overflow-hidden" onClick={() => setShowEmojiPicker(false)}>
       <AnimatePresence>
         {showGroupInfo && (
           <GroupInfoModal 
@@ -231,62 +230,63 @@ const Chat = () => {
         )}
       </AnimatePresence>
 
-      <ChatSidebar 
-        isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} 
-        username={username} room={room} isDM={isDM} dmPartner={dmPartner} 
-        roomUsers={roomUsers} roomMembers={roomMembers} onGroupInfo={() => setShowGroupInfo(true)} 
-      />
-
-      <motion.div 
-        layout
-        className="flex-1 flex flex-col bg-slate-900/40 min-w-0"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Chat Top Bar (Contextual) */}
-        <div className="px-6 py-4 border-b border-white/5 flex justify-between items-center bg-slate-900/40 backdrop-blur-md z-30">
+      <div className="flex-1 flex flex-col min-w-0 bg-transparent relative">
+        {/* Chat Top Bar (Sticky Contextual Header) */}
+        <div className="h-16 border-b border-white/5 flex justify-between items-center px-6 bg-slate-900/40 backdrop-blur-md z-30 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <button className="lg:hidden p-2 -ml-2 text-slate-400 hover:text-white" onClick={() => setIsSidebarOpen(true)}>
-              <Menu size={20} />
-            </button>
             <div className="cursor-pointer min-w-0 group" onClick={() => setShowGroupInfo(true)}>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold tracking-tight text-white group-hover:text-indigo-400 transition-colors truncate">
+                <h2 className="text-base font-bold tracking-tight text-white group-hover:text-indigo-400 transition-colors truncate">
                   {isDM ? dmPartner : `#${room}`}
                 </h2>
               </div>
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-1.5 leading-none mt-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> 
-                {roomUsers.length} online <span className="opacity-20">|</span> {roomMembers.length} members
+                {roomUsers.length} online
               </p>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            {pinnedMessages.length > 0 && (
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
               <button 
-                onClick={() => setShowPinned(!showPinned)} 
+                onClick={() => { setIsSearchOpen(!isSearchOpen); setSearchQuery(''); }}
                 className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all",
-                  showPinned ? "bg-yellow-400/20 border-yellow-400/50 text-yellow-500" : "bg-white/5 border-white/10 text-yellow-500/80 hover:bg-white/10"
+                  "p-2 rounded-xl transition-all",
+                  isSearchOpen ? "bg-indigo-500/20 text-indigo-400" : "text-slate-500 hover:text-white hover:bg-white/5"
                 )}
               >
-                📌 {pinnedMessages.length}
+                <Search size={20} />
               </button>
-            )}
+              {pinnedMessages.length > 0 && (
+                <button 
+                  onClick={() => setShowPinned(!showPinned)} 
+                  className={cn(
+                    "p-2 rounded-xl transition-all",
+                    showPinned ? "bg-yellow-400/20 text-yellow-500" : "text-slate-500 hover:text-white hover:bg-white/5"
+                  )}
+                >
+                  <Pin size={20} />
+                </button>
+              )}
+              {isPowerUser && (
+                <button onClick={handleClearChat} className="p-2 rounded-xl text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all" title="Clear Chat">
+                  <Trash2 size={20} />
+                </button>
+              )}
+            </div>
+
+            <div className="w-[1px] h-6 bg-white/5 mx-1" />
+
             <button 
-              onClick={() => { setIsSearchOpen(!isSearchOpen); setSearchQuery(''); }}
+              onClick={() => setIsMemberPanelOpen(!isMemberPanelOpen)}
               className={cn(
-                "p-2 rounded-lg border transition-all",
-                isSearchOpen ? "bg-indigo-500/20 border-indigo-500/50 text-indigo-400" : "bg-white/5 border-white/10 text-slate-400 hover:text-white"
+                "p-2 rounded-xl transition-all",
+                isMemberPanelOpen ? "bg-indigo-500/20 text-indigo-400" : "text-slate-500 hover:text-white hover:bg-white/5"
               )}
             >
-              <Search size={18} />
+              <User size={22} />
             </button>
-            {isPowerUser && (
-              <button onClick={handleClearChat} className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition-all" title="Clear Chat">
-                <Trash2 size={18} />
-              </button>
-            )}
           </div>
         </div>
 
@@ -453,7 +453,15 @@ const Chat = () => {
             </button>
           </form>
         </div>
-      </motion.div>
+      </div>
+
+      {/* Member Panel (Right) */}
+      <MemberPanel 
+        members={roomMembers} 
+        onlineUsers={roomUsers} 
+        isOpen={isMemberPanelOpen} 
+        onClose={() => setIsMemberPanelOpen(false)} 
+      />
     </div>
   );
 };

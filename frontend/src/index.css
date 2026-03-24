@@ -26,6 +26,11 @@
   /* Animations */
   --transition-fast: 0.15s ease-in-out;
   --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Layout Widths */
+  --sidebar-primary-width: 72px;
+  --sidebar-secondary-width: 260px;
+  --member-panel-width: 240px;
 }
 
 * {
@@ -200,4 +205,90 @@ body {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
+/* New Sidebar Layout Classes */
+.app-shell {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: black;
+}
 
+.sidebar-primary {
+  width: var(--sidebar-primary-width);
+  height: 100%;
+  background: rgba(15, 23, 42, 0.95);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0;
+  flex-shrink: 0;
+  z-index: 50;
+}
+
+.sidebar-secondary {
+  width: var(--sidebar-secondary-width);
+  height: 100%;
+  background: rgba(30, 41, 59, 0.6);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  backdrop-filter: blur(20px);
+  z-index: 40;
+}
+
+.main-content {
+  flex: 1;
+  height: 100%;
+  min-width: 0;
+  position: relative;
+  background: transparent;
+}
+
+.member-panel {
+  width: var(--member-panel-width);
+  height: 100%;
+  background: rgba(30, 41, 59, 0.4);
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  z-index: 30;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (max-width: 1024px) {
+  .member-panel {
+    position: absolute;
+    right: 0;
+    top: 64px;
+    bottom: 0;
+    transform: translateX(100%);
+    width: 280px;
+    background: rgba(15, 23, 42, 0.98);
+    backdrop-filter: blur(20px);
+    z-index: 100;
+  }
+  .member-panel.open {
+    transform: translateX(0);
+    box-shadow: -10px 0 50px rgba(0,0,0,0.8);
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar-secondary {
+    position: absolute;
+    left: var(--sidebar-primary-width);
+    top: 0;
+    bottom: 0;
+    transform: translateX(-150%);
+    z-index: 100;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .sidebar-secondary.open {
+    transform: translateX(0);
+    box-shadow: 10px 0 50px rgba(0,0,0,0.8);
+  }
+}

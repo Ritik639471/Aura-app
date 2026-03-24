@@ -1,11 +1,41 @@
-import React from 'react';
-import Header from './Header';
+import React, { useState } from 'react';
+import SidebarPrimary from './SidebarPrimary';
+import SidebarSecondary from './SidebarSecondary';
+import { Menu, X } from 'lucide-react';
+import { cn } from '../utils/cn';
 
 const Layout = ({ children }) => {
+  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-slate-950 text-white selection:bg-indigo-500/30">
-      <Header />
-      <main className="pt-16 min-h-screen">
+    <div className="app-shell font-sans text-slate-200 relative">
+      <SidebarPrimary />
+      
+      {/* Mobile Overlay */}
+      {isLeftSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[35] md:hidden"
+          onClick={() => setIsLeftSidebarOpen(false)}
+        />
+      )}
+
+      <div className={cn(
+        "sidebar-secondary",
+        isLeftSidebarOpen ? "open" : ""
+      )}>
+        <SidebarSecondary />
+      </div>
+
+      <main className="main-content flex flex-col min-w-0 bg-slate-950/20">
+        {/* Mobile Nav Toggle */}
+        <div className="md:hidden absolute top-4 left-4 z-[60]">
+          <button 
+            onClick={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
+            className="p-2 bg-slate-900 border border-white/10 rounded-xl text-slate-400 hover:text-white"
+          >
+            {isLeftSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
         {children}
       </main>
     </div>

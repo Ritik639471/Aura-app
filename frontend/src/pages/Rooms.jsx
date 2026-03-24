@@ -1,19 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Hash, Plus, Trash2, LogOut, Search, MessageCircle, X, User } from 'lucide-react';
+import { Hash, Plus, Trash2, Search, X } from 'lucide-react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-
-import SpotlightCard from '../components/ReactBits/SpotlightCard';
-import ShinyText from '../components/ReactBits/ShinyText';
-import BlurText from '../components/ReactBits/BlurText';
-import VariableProximity from '../components/ReactBits/VariableProximity';
-import { cn } from '../utils/cn';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const API_URL = 'https://aura-app-keg8.onrender.com/api';
 
 const Rooms = () => {
-  const { state } = useLocation();
+  const location = useLocation();
+  const state = location.state;
   const [activeTab, setActiveTab] = useState('joined');
   const [rooms, setRooms] = useState([]);
   const [newRoomName, setNewRoomName] = useState('');
@@ -113,144 +107,136 @@ const Rooms = () => {
   };
 
   return (
-    <div className="w-full flex flex-col items-center py-8 px-4 md:px-8 max-w-5xl mx-auto">
-      
+    <div className="flex flex-col flex-1 min-w-0 bg-transparent overflow-hidden">
+      {/* Sticky Header */}
+      <header className="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-slate-900/40 backdrop-blur-md shrink-0">
+        <div className="flex items-center gap-4">
+          <h2 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            <Search className="text-indigo-400" size={20} />
+            Explore Channels
+          </h2>
+        </div>
+        
+        <div className="flex p-1 bg-white/5 rounded-xl">
+          {['joined', 'discover'].map(tab => (
+            <button 
+              key={tab} 
+              onClick={() => setActiveTab(tab)} 
+              className={cn(
+                "px-4 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all duration-200 whitespace-nowrap",
+                activeTab === tab 
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30" 
+                  : "text-slate-500 hover:text-white hover:bg-white/5"
+              )}
+            >
+              {tab === 'joined' ? 'My Joined' : 'Discover New'}
+            </button>
+          ))}
+        </div>
+      </header>
+
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
+        <div className="max-w-6xl mx-auto space-y-8">
+          {/* Internal Search Bar */}
+          <div className="relative group max-w-lg">
+            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+            <input 
+              className="w-full bg-white/5 border border-white/5 rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:bg-white/10 focus:border-indigo-500/30 outline-none transition-all" 
+              type="text" 
+              placeholder={activeTab === 'discover' ? "Find new channels to join..." : "Search your channels..."}
+              value={searchQuery} 
+              onChange={(e) => setSearchQuery(e.target.value)} 
+            />
+          </div>
+
+          <AnimatePresence mode="wait">
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                className="bg-red-500/10 text-red-500 p-4 rounded-xl text-sm flex justify-between items-center border border-red-500/20"
+              >
+                <div className="flex items-center gap-2">⚠️ {error}</div>
+                <X size={18} className="cursor-pointer opacity-70 hover:opacity-100" onClick={() => setError('')} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Room Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {loading ? (
+              Array(6).fill(0).map((_, i) => (
+                <div key={i} className="h-40 rounded-3xl bg-white/5 animate-pulse" />
+              ))
+            ) : activeTab === 'joined' ? (
+              filteredJoined.length === 0 ? (
+                <div className="col-span-full py-20 text-left flex items-start gap-4">
+                  <p className="text-slate-500 italic">No channels joined yet.</p>
+                </div>
+              ) : (
+                filteredJoined.map((room) => (
+                  <RoomCard 
+                    key={room._id} room={room} userId={userId} 
+                    onClick={() => navigate('/chat', { state: { room: room.name } })}
+                    onDelete={(e) => handleDeleteRoom(room._id, e)}
+                    isMember={true}
+                  />
+                ))
+              )
+            ) : (
+              filteredDiscover.length === 0 ? (
+                <div className="col-span-full py-20 text-left text-slate-500 italic">No more channels found.</div>
+              ) : (
+                filteredDiscover.map((room) => (
+                  <RoomCard 
+                    key={room._id} room={room} userId={userId} 
+                    onClick={() => handleJoinAction(room._id)}
+                    isMember={false}
+                  />
+                ))
+              )
+            )}
+          </div>
+        </div>
+      </div>
+
       <AnimatePresence>
         {isCreateModalOpen && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
               onClick={() => setIsCreateModalOpen(false)}
             />
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-3xl p-8 shadow-2xl"
             >
-              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                <Plus className="text-indigo-500" /> Create New Channel
+              <h2 className="text-xl font-bold mb-6 flex items-center gap-3">
+                <Plus className="text-indigo-500" /> Create Channel
               </h2>
-              <form onSubmit={handleCreateRoom} className="space-y-4">
+              <form onSubmit={handleCreateRoom} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Channel Name</label>
+                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Channel Name</label>
                   <input 
                     autoFocus
-                    className="input-base !bg-black/20" 
+                    className="w-full bg-black/40 border border-white/10 rounded-2xl py-3 px-4 text-white focus:border-indigo-500/50 outline-none transition-all placeholder:text-slate-600" 
                     type="text" 
-                    placeholder="e.g. general-chat" 
+                    placeholder="e.g. brainstorming" 
                     value={newRoomName} 
                     onChange={(e) => setNewRoomName(e.target.value)} 
                   />
                 </div>
                 <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={() => setIsCreateModalOpen(false)} className="flex-1 px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 font-bold transition-all">Cancel</button>
-                  <button type="submit" className="flex-1 btn-primary">Create Channel</button>
+                  <button type="button" onClick={() => setIsCreateModalOpen(false)} className="flex-1 px-6 py-3 rounded-2xl bg-white/5 hover:bg-white/10 font-bold transition-all">Cancel</button>
+                  <button type="submit" className="flex-1 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20">Create</button>
                 </div>
               </form>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
-
-      <div className="w-full flex flex-col gap-8">
-        {/* Search Header */}
-        <div className="flex flex-col md:flex-row justify-between items-end md:items-center gap-4">
-          <div className="w-full md:max-w-xs relative group">
-            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
-            <input 
-              className="input-base !pl-12 !bg-white/5 border-none" 
-              type="text" 
-              placeholder={activeTab === 'dms' ? "Search direct messages..." : "Search channels..."}
-              value={searchQuery} 
-              onChange={(e) => setSearchQuery(e.target.value)} 
-            />
-          </div>
-          
-          <div className="flex p-1 bg-white/5 rounded-2xl w-full md:w-auto">
-            {['joined', 'discover', 'dms'].map(tab => (
-              <button 
-                key={tab} 
-                onClick={() => setActiveTab(tab)} 
-                className={cn(
-                  "flex-1 md:flex-none px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-300 whitespace-nowrap",
-                  activeTab === tab 
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30" 
-                    : "text-slate-500 hover:text-white hover:bg-white/5"
-                )}
-              >
-                {tab === 'joined' ? 'My Channels' : tab === 'discover' ? 'Discover' : 'DMs'}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <AnimatePresence mode="wait">
-          {error && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-              className="bg-red-500/10 text-red-500 p-4 rounded-xl text-sm flex justify-between items-center border border-red-500/20"
-            >
-              <div className="flex items-center gap-2">⚠️ {error}</div>
-              <X size={18} className="cursor-pointer opacity-70 hover:opacity-100" onClick={() => setError('')} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Room Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {loading ? (
-            Array(6).fill(0).map((_, i) => (
-              <div key={i} className="h-24 rounded-3xl bg-white/5 animate-pulse" />
-            ))
-          ) : activeTab === 'joined' ? (
-            filteredJoined.length === 0 ? (
-              <div className="col-span-full py-20 text-center flex flex-col items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-slate-600">
-                  <Hash size={32} />
-                </div>
-                <p className="text-slate-500 italic">No channels joined yet. Explore or create one!</p>
-              </div>
-            ) : (
-              filteredJoined.map((room, idx) => (
-                <RoomCard 
-                  key={room._id} room={room} userId={userId} 
-                  onClick={() => navigate('/chat', { state: { room: room.name } })}
-                  onDelete={(e) => handleDeleteRoom(room._id, e)}
-                  isMember={true}
-                />
-              ))
-            )
-          ) : activeTab === 'discover' ? (
-            filteredDiscover.length === 0 ? (
-              <div className="col-span-full py-20 text-center text-slate-500 italic">No more channels to discover.</div>
-            ) : (
-              filteredDiscover.map((room, idx) => (
-                <RoomCard 
-                  key={room._id} room={room} userId={userId} 
-                  onClick={() => handleJoinAction(room._id)}
-                  isMember={false}
-                />
-              ))
-            )
-          ) : (
-            myDMs.length === 0 ? (
-              <div className="col-span-full py-20 text-center text-slate-500 italic">No DMs yet. Start one in the header!</div>
-            ) : (
-              myDMs.map((room, idx) => {
-                const partner = getDmPartner(room);
-                return (
-                  <RoomCard 
-                    key={room._id} room={room} userId={userId} partnerName={partner}
-                    onClick={() => navigate('/chat', { state: { room: room.name, isDM: true, dmPartner: partner } })}
-                  />
-                );
-              })
-            )
-          )}
-        </div>
-      </div>
     </div>
   );
 };
