@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
-import { Send, Menu, Paperclip, Smile, Search, X, Pin, ChevronDown, Trash2 } from 'lucide-react';
+import { Send, Menu, Paperclip, Smile, Search, X, Pin, ChevronDown, Trash2, User, Info } from 'lucide-react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -10,7 +10,6 @@ import MemberPanel from '../components/MemberPanel';
 import GroupInfoModal from '../components/GroupInfoModal';
 import EmojiPicker from '../components/EmojiPicker';
 import { cn } from '../utils/cn';
-import { User, Info } from 'lucide-react';
 
 const SOCKET_URL = 'https://aura-app-keg8.onrender.com';
 const API_URL = 'https://aura-app-keg8.onrender.com/api';

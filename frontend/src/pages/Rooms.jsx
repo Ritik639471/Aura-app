@@ -1,7 +1,10 @@
+import React, { useState, useEffect } from 'react';
 import { Hash, Plus, Trash2, Search, X } from 'lucide-react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
+import SpotlightCard from '../components/ReactBits/SpotlightCard';
+import { cn } from '../utils/cn';
 
 const API_URL = 'https://aura-app-keg8.onrender.com/api';
 
