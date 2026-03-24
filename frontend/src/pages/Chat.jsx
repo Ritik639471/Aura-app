@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import { Send, Menu, Paperclip, Smile, Search, X, Pin, ChevronDown, Trash2, User, Info } from 'lucide-react';
 import axios from 'axios';
@@ -16,15 +16,16 @@ const API_URL = 'https://aura-app-keg8.onrender.com/api';
 
 const Chat = () => {
   const { state } = useLocation();
+  const { roomName } = useParams();
   const navigate = useNavigate();
 
   // Auth / room context
   const username = localStorage.getItem('username');
   const token = localStorage.getItem('token');
   const userId = localStorage.getItem('userId');
-  const room = state?.room;
-  const isDM = state?.isDM;
-  const dmPartner = state?.dmPartner;
+  const room = roomName || state?.room;
+  const [isDM, setIsDM] = useState(state?.isDM || false);
+  const [dmPartner, setDmPartner] = useState(state?.dmPartner || null);
 
   // Socket & messages
   const [socket, setSocket] = useState(null);
@@ -63,7 +64,18 @@ const Chat = () => {
   const isPowerUser = roomAdmins.includes(userId) || roomCreatorId === userId;
 
   useEffect(() => {
-    if (!token || !username || !room) { navigate('/login'); return; }
+    if (!token || !username || !room) { 
+      if (!token || !username) navigate('/login');
+      else navigate('/rooms');
+      return; 
+    }
+    
+    // Reset room state on switch
+    setMessages([]);
+    setRoomUsers([]);
+    setRoomMembers([]);
+    setRoomId(null);
+
     fetchHistory();
     fetchRoomDetails();
     fetchPinned();
@@ -94,7 +106,7 @@ const Chat = () => {
     s.on('room_cleared', () => setMessages([]));
 
     return () => { s.emit('leave_room', { room, username }); s.disconnect(); };
-  }, [username, room, token]);
+  }, [username, room, token, navigate]);
 
   const scrollToBottom = (behavior = 'smooth') => {
     messagesEndRef.current?.scrollIntoView({ behavior });
@@ -126,6 +138,16 @@ const Chat = () => {
       const r = await axios.get(`${API_URL}/rooms`, { headers: { Authorization: `Bearer ${token}` } });
       const cur = r.data.find(rm => rm.name === room);
       if (!cur) return;
+      
+      // Recover DM status on refresh
+      if (cur.isDirectMessage || room?.startsWith('dm-')) {
+        setIsDM(true);
+        const partner = cur.members?.find(m => (m._id || m) !== userId && m.username !== username);
+        if (partner) setDmPartner(partner.username);
+      } else {
+        setIsDM(false);
+      }
+
       setRoomId(cur._id);
       setRoomCreatorId(cur.creator?._id || cur.creator);
       const adminIds = (cur.admins || []).map(a => a._id || a);

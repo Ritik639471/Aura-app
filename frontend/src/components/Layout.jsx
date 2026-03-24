@@ -22,16 +22,21 @@ const Layout = ({ children }) => {
       <SidebarSecondary isOpen={isLeftSidebarOpen} />
 
       <main className="main-content flex flex-col min-w-0 bg-slate-950/20 relative">
-        {/* Mobile Nav Toggle */}
-        <div className="md:hidden absolute top-4 left-4 z-[60]">
+        {/* Mobile Header (Sticky) */}
+        <div className="md:hidden h-16 border-b border-white/5 flex items-center px-4 bg-slate-900/40 backdrop-blur-md z-[60] shrink-0 gap-3">
           <button 
             onClick={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
-            className="p-3 bg-slate-900 border border-white/10 rounded-2xl text-slate-400 hover:text-white shadow-2xl"
+            className="p-2.5 bg-slate-800/80 border border-white/10 rounded-xl text-slate-300 hover:text-white transition-all shadow-xl"
+            aria-label="Toggle Sidebar"
           >
-            {isLeftSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+            {isLeftSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
+          <span className="font-black tracking-tighter text-indigo-400 text-lg">AURA</span>
         </div>
-        {children}
+
+        <div className="flex-1 overflow-hidden relative">
+          {children}
+        </div>
       </main>
     </div>
   );

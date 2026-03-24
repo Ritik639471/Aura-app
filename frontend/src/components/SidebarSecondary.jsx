@@ -70,10 +70,10 @@ const SidebarSecondary = ({ isOpen }) => {
             {joinedRooms.map(room => (
               <button
                 key={room._id}
-                onClick={() => navigate('/chat', { state: { room: room.name } })}
+                onClick={() => navigate(`/chat/${room.name}`, { state: { room: room.name } })}
                 className={cn(
                   "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl group transition-all duration-200",
-                  location.state?.room === room.name && !location.state?.isDM
+                  location.pathname === `/chat/${room.name}`
                     ? "bg-indigo-500/20 text-white" 
                     : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
                 )}
@@ -96,10 +96,10 @@ const SidebarSecondary = ({ isOpen }) => {
               return (
                 <button
                   key={dm._id}
-                  onClick={() => navigate('/chat', { state: { room: dm.name, isDM: true, dmPartner: partner } })}
+                  onClick={() => navigate(`/chat/${dm.name}`, { state: { room: dm.name, isDM: true, dmPartner: partner } })}
                   className={cn(
                     "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl group transition-all duration-200",
-                    location.state?.dmPartner === partner
+                    location.pathname === `/chat/${dm.name}`
                       ? "bg-indigo-500/20 text-white" 
                       : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
                   )}

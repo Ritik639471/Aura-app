@@ -121,16 +121,16 @@ const Rooms = () => {
           </h2>
         </div>
         
-        <div className="flex p-1 bg-white/5 rounded-xl">
+        <div className="flex gap-4 p-1.5 bg-black/20 backdrop-blur-md rounded-2xl border border-white/5">
           {['joined', 'discover', 'dms'].map(tab => (
             <button 
               key={tab} 
               onClick={() => setActiveTab(tab)} 
               className={cn(
-                "px-4 py-1.5 rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all duration-200 whitespace-nowrap",
+                "px-6 py-2.5 rounded-xl font-bold text-sm uppercase tracking-widest transition-all duration-300 whitespace-nowrap",
                 activeTab === tab 
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30" 
-                  : "text-slate-500 hover:text-white hover:bg-white/5"
+                  ? "bg-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.4)]" 
+                  : "text-slate-400 hover:text-white hover:bg-white/5"
               )}
             >
               {tab === 'joined' ? 'My Joined' : tab === 'discover' ? 'Discover New' : 'Direct Messages'}
@@ -180,7 +180,7 @@ const Rooms = () => {
               filteredJoined.map((room) => (
                 <RoomCard 
                   key={room._id} room={room} userId={userId} 
-                  onClick={() => navigate('/chat', { state: { room: room.name } })}
+                  onClick={() => navigate(`/chat/${room.name}`, { state: { room: room.name } })}
                   onDelete={(e) => handleDeleteRoom(room._id, e)}
                   isMember={true}
                 />
@@ -207,7 +207,7 @@ const Rooms = () => {
                 return (
                   <RoomCard 
                     key={room._id} room={room} userId={userId} partnerName={partner}
-                    onClick={() => navigate('/chat', { state: { room: room.name, isDM: true, dmPartner: partner } })}
+                    onClick={() => navigate(`/chat/${room.name}`, { state: { room: room.name, isDM: true, dmPartner: partner } })}
                   />
                 );
               })
@@ -219,10 +219,10 @@ const Rooms = () => {
 
       <AnimatePresence>
         {isCreateModalOpen && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/60 backdrop-blur-md"
               onClick={() => setIsCreateModalOpen(false)}
             />
             <motion.div 

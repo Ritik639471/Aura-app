@@ -27,7 +27,8 @@ function App() {
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/rooms" element={<Rooms />} />
-          <Route path="/chat" element={<Chat />} />
+          <Route path="/chat/:roomName" element={<Chat />} />
+          <Route path="/chat" element={<Navigate to="/rooms" replace />} />
           <Route path="/profile" element={<Profile />} />
         </Routes>
       </AppLayout>

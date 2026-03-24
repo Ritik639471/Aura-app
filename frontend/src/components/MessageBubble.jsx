@@ -89,17 +89,35 @@ const MessageBubble = ({ msg, username, isHighlighted, onReact, onEdit, onDelete
     <motion.div 
       initial={{ opacity: 0, y: 10, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      className={cn(
-        "flex flex-col mb-4 group",
-        isMe ? "items-end" : "items-start"
-      )}
+      className="flex items-start gap-3 mb-6 group transition-all"
       onMouseEnter={() => setShowActions(true)} 
       onMouseLeave={() => setShowActions(false)}
     >
-      <div className="max-w-[85%] md:max-w-[70%] relative">
-        {/* Author Label */}
-        {!isMe && !isDeleted && (
-          <span className="text-[11px] font-black text-indigo-400/80 mb-1 ml-2 uppercase tracking-widest">{msg.author}</span>
+      {/* Avatar */}
+      <div className="shrink-0 mt-1">
+        <div className={cn(
+          "w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm shadow-lg shadow-black/20",
+          isMe ? "bg-indigo-600 text-white" : "bg-slate-800 text-slate-400"
+        )}>
+          {msg.author[0].toUpperCase()}
+        </div>
+      </div>
+
+      <div className="max-w-[85%] md:max-w-[75%] relative flex flex-col">
+        {/* Author & Time */}
+        {!isDeleted && (
+          <div className="flex items-baseline gap-2 mb-1.5 ml-1">
+            <span className={cn(
+              "text-sm font-black tracking-tight",
+              isMe ? "text-indigo-400" : "text-slate-200"
+            )}>
+              {msg.author}
+            </span>
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter opacity-80">
+              {msg.time}
+            </span>
+            {msg.edited && <span className="text-[9px] font-bold text-slate-600 lowercase opacity-60">(edited)</span>}
+          </div>
         )}
 
         {/* Action bar on hover */}
@@ -188,14 +206,10 @@ const MessageBubble = ({ msg, username, isHighlighted, onReact, onEdit, onDelete
             </>
           )}
 
-          {/* Timestamp & Meta */}
-          {!isDeleted && (
-            <div className={cn(
-              "flex items-center justify-end gap-1.5 mt-1.5 text-[10px] font-bold uppercase tracking-tighter opacity-70",
-              isMe ? "text-white/80" : "text-slate-400"
-            )}>
-              {msg.edited && <span className="mr-1 lowercase opacity-50">edited</span>}
-              {msg.time} {renderReadReceipt()}
+          {/* Inline Read Receipt (For Personal reference) */}
+          {isMe && !isDeleted && (
+            <div className="flex justify-end mt-1.5 opacity-60">
+              {renderReadReceipt()}
             </div>
           )}
         </div>
