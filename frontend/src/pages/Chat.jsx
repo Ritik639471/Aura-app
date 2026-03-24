@@ -1,13 +1,16 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
-import { Send, Menu, Paperclip, Smile, Search, X, Pin } from 'lucide-react';
+import { Send, Menu, Paperclip, Smile, Search, X, Pin, ChevronDown, Trash2 } from 'lucide-react';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import MessageBubble from '../components/MessageBubble';
 import ChatSidebar from '../components/ChatSidebar';
 import GroupInfoModal from '../components/GroupInfoModal';
 import EmojiPicker from '../components/EmojiPicker';
+import BlurText from '../components/ReactBits/BlurText';
+import { cn } from '../utils/cn';
 
 const SOCKET_URL = 'https://aura-app-keg8.onrender.com';
 const API_URL = 'https://aura-app-keg8.onrender.com/api';
@@ -33,13 +36,6 @@ const Chat = () => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
 
-  // Room presence
-  const [roomUsers, setRoomUsers] = useState([]);
-  const [roomMembers, setRoomMembers] = useState([]);
-  const [roomId, setRoomId] = useState(null);
-  const [roomAdmins, setRoomAdmins] = useState([]);
-  const [roomCreatorId, setRoomCreatorId] = useState(null);
-
   // UI state
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
@@ -47,16 +43,23 @@ const Chat = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showPinned, setShowPinned] = useState(false);
+  const [showScrollBottom, setShowScrollBottom] = useState(false);
+
+  // Room presence
+  const [roomUsers, setRoomUsers] = useState([]);
+  const [roomMembers, setRoomMembers] = useState([]);
+  const [roomId, setRoomId] = useState(null);
+  const [roomAdmins, setRoomAdmins] = useState([]);
+  const [roomCreatorId, setRoomCreatorId] = useState(null);
 
   const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const scrollContainerRef = useRef(null);
   const fileInputRef = useRef(null);
   const msgInputRef = useRef(null);
 
-  // Derived permissions
   const isPowerUser = roomAdmins.includes(userId) || roomCreatorId === userId;
 
-  // ------ Effects ------
   useEffect(() => {
     if (!token || !username || !room) { navigate('/login'); return; }
     fetchHistory();
@@ -66,25 +69,37 @@ const Chat = () => {
     const s = io(SOCKET_URL);
     setSocket(s);
     s.emit('join_room', { room, username });
-    s.emit('mark_read', { room, username });
 
     s.on('room_users', users => setRoomUsers(users));
-    s.on('receive_message', data => { setMessages(prev => [...prev, data]); s.emit('mark_read', { room, username }); });
+    s.on('receive_message', data => { 
+      setMessages(prev => [...prev, data]); 
+      s.emit('mark_read', { room, username }); 
+    });
     s.on('reaction_updated', ({ messageId, reactions }) => setMessages(prev => prev.map(m => m._id === messageId ? { ...m, reactions } : m)));
-    s.on('messages_read', ({ username: reader }) => setMessages(prev => prev.map(m => ({ ...m, readBy: m.readBy?.includes(reader) ? m.readBy : [...(m.readBy || []), reader] }))));
-    s.on('display_typing', data => setTypingUsers(prev => prev.includes(data.username) ? prev : [...prev, data.username]));
-    s.on('hide_typing', data => setTypingUsers(prev => prev.filter(u => u !== data.username)));
     s.on('message_edited', ({ messageId, message }) => setMessages(prev => prev.map(m => m._id === messageId ? { ...m, message, edited: true } : m)));
     s.on('message_deleted', ({ messageId }) => setMessages(prev => prev.map(m => m._id === messageId ? { ...m, deletedAt: new Date() } : m)));
     s.on('message_pinned', ({ messageId, pinned }) => { setMessages(prev => prev.map(m => m._id === messageId ? { ...m, pinned } : m)); fetchPinned(); });
+    s.on('display_typing', data => setTypingUsers(prev => prev.includes(data.username) ? prev : [...prev, data.username]));
+    s.on('hide_typing', data => setTypingUsers(prev => prev.filter(u => u !== data.username)));
     s.on('room_cleared', () => setMessages([]));
 
     return () => { s.emit('leave_room', { room, username }); s.disconnect(); };
   }, [username, room, token]);
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, typingUsers]);
+  const scrollToBottom = (behavior = 'smooth') => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
+  };
 
-  // ------ API ------
+  useEffect(() => {
+    if (!showScrollBottom) scrollToBottom();
+  }, [messages, typingUsers]);
+
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
+    setShowScrollBottom(!isAtBottom);
+  };
+
   const fetchHistory = async () => {
     try { const r = await axios.get(`${API_URL}/messages/${room}`, { headers: { Authorization: `Bearer ${token}` } }); setMessages(r.data); }
     catch (e) { console.error(e); }
@@ -115,7 +130,6 @@ const Chat = () => {
     } catch (e) { /* silent */ }
   };
 
-  // ------ Handlers ------
   const handleTyping = e => {
     setCurrentMessage(e.target.value);
     if (socket) {
@@ -132,8 +146,7 @@ const Chat = () => {
     socket.emit('send_message', msgData);
     setMessages(prev => [...prev, msgData]);
     setCurrentMessage('');
-    socket.emit('stop_typing', { room, username });
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    scrollToBottom();
   };
 
   const handleImageUpload = async e => {
@@ -145,11 +158,10 @@ const Chat = () => {
       const fd = new FormData();
       fd.append('image', file); fd.append('room', room);
       const res = await axios.post(`${API_URL}/upload`, fd, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } });
-      const msg = res.data.data;
-      socket?.emit('broadcast_image', msg);
-      setMessages(prev => [...prev, msg]);
+      socket?.emit('broadcast_image', res.data.data);
+      setMessages(prev => [...prev, res.data.data]);
     } catch (err) { console.error(err); }
-    setUploadingImage(false); setImagePreview(null); e.target.value = '';
+    setUploadingImage(false); setImagePreview(null);
   };
 
   const handleReact = (messageId, emoji) => socket?.emit('toggle_reaction', { messageId, emoji, username });
@@ -173,146 +185,260 @@ const Chat = () => {
   const handlePin = async (messageId) => {
     try {
       const res = await axios.post(`${API_URL}/messages/${messageId}/pin`, {}, { headers: { Authorization: `Bearer ${token}` } });
-      const updated = res.data;
-      setMessages(prev => prev.map(m => m._id === messageId ? { ...m, pinned: updated.pinned } : m));
-      socket?.emit('message_pinned', { messageId, pinned: updated.pinned, room });
+      setMessages(prev => prev.map(m => m._id === messageId ? { ...m, pinned: res.data.pinned } : m));
+      socket?.emit('message_pinned', { messageId, pinned: res.data.pinned, room });
       fetchPinned();
     } catch (err) { console.error(err); }
   };
 
   const handleClearChat = async () => {
-    try {
-      await axios.delete(`${API_URL}/messages/room/${room}/clear`, { headers: { Authorization: `Bearer ${token}` } });
-      setMessages([]);
-      socket?.emit('room_cleared', { room });
-    } catch (err) { console.error(err); }
+    if (window.confirm('Are you sure you want to clear all messages?')) {
+      try {
+        await axios.delete(`${API_URL}/messages/room/${room}/clear`, { headers: { Authorization: `Bearer ${token}` } });
+        setMessages([]);
+        socket?.emit('room_cleared', { room });
+      } catch (err) { console.error(err); }
+    }
   };
 
-  const handleMakeAdmin = async (targetUserId, isCurrentlyAdmin) => {
-    if (!roomId) return;
-    try {
-      if (isCurrentlyAdmin) {
-        await axios.delete(`${API_URL}/rooms/${roomId}/remove-admin`, { data: { userId: targetUserId }, headers: { Authorization: `Bearer ${token}` } });
-      } else {
-        await axios.post(`${API_URL}/rooms/${roomId}/make-admin`, { userId: targetUserId }, { headers: { Authorization: `Bearer ${token}` } });
-      }
-      fetchRoomDetails();
-    } catch (err) { console.error(err); }
-  };
-
-  // Filtered messages for search
-  const displayedMessages = searchQuery
+  const filteredMessages = searchQuery
     ? messages.filter(m => m.message?.toLowerCase().includes(searchQuery.toLowerCase()) || m.author?.toLowerCase().includes(searchQuery.toLowerCase()))
     : messages;
 
   return (
-    <div className="chat-wrapper" onClick={() => { setShowEmojiPicker(false); }}>
+    <div className="chat-wrapper" onClick={() => setShowEmojiPicker(false)}>
+      
+      <AnimatePresence>
+        {showGroupInfo && (
+          <GroupInfoModal 
+            room={room} roomMembers={roomMembers} roomUsers={roomUsers} 
+            username={username} userId={userId} token={token} isDM={isDM} 
+            dmPartner={dmPartner} onClose={() => setShowGroupInfo(false)} 
+            onMakeAdmin={() => fetchRoomDetails()} 
+          />
+        )}
+      </AnimatePresence>
 
-      {showGroupInfo && (
-        <GroupInfoModal room={room} roomMembers={roomMembers} roomUsers={roomUsers} username={username} userId={userId} token={token} isDM={isDM} dmPartner={dmPartner} onClose={() => setShowGroupInfo(false)} onMakeAdmin={handleMakeAdmin} />
-      )}
+      <ChatSidebar 
+        isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} 
+        username={username} room={room} isDM={isDM} dmPartner={dmPartner} 
+        roomUsers={roomUsers} roomMembers={roomMembers} onGroupInfo={() => setShowGroupInfo(true)} 
+      />
 
-      <ChatSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} username={username} room={room} isDM={isDM} dmPartner={dmPartner} roomUsers={roomUsers} roomMembers={roomMembers} onGroupInfo={() => setShowGroupInfo(true)} />
-
-      {/* Main */}
-      <div className="chat-main glass-panel" onClick={e => e.stopPropagation()}>
-
+      <motion.div 
+        layout
+        className="chat-main glass-panel !overflow-hidden flex flex-col"
+        onClick={e => e.stopPropagation()}
+      >
         {/* Header */}
-        <div style={{ padding: '14px 20px', borderBottom: 'var(--glass-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-            <button className="mobile-nav-toggle" onClick={() => setIsSidebarOpen(true)}><Menu size={22} /></button>
-            <div style={{ cursor: 'pointer', minWidth: 0 }} onClick={() => setShowGroupInfo(true)}>
-              <h2 style={{ fontSize: '1.1rem', fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{isDM ? dmPartner : `#${room}`}</h2>
-              <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-                <span style={{ color: 'var(--success)' }}>●</span> {roomUsers.length} online · {roomMembers.length} members
+        <div className="px-5 py-4 border-b border-white/10 flex justify-between items-center gap-4 bg-white/5 backdrop-blur-md">
+          <div className="flex items-center gap-3 min-w-0">
+            <button className="md:hidden p-2 text-slate-300 hover:text-white" onClick={() => setIsSidebarOpen(true)}>
+              <Menu size={20} />
+            </button>
+            <div className="cursor-pointer min-w-0 group" onClick={() => setShowGroupInfo(true)}>
+              <div className="flex items-center gap-2">
+                <BlurText 
+                  text={isDM ? dmPartner : `#${room}`} 
+                  className="text-lg font-bold tracking-tight text-white group-hover:text-indigo-400 transition-colors" 
+                  delay={100}
+                />
+              </div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5 leading-none mt-1">
+                <span className="text-emerald-500 animate-pulse">●</span> 
+                {roomUsers.length} online <span className="opacity-30">|</span> {roomMembers.length} members
               </p>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
+          
+          <div className="flex items-center gap-2">
             {pinnedMessages.length > 0 && (
-              <button onClick={() => setShowPinned(!showPinned)} style={{ background: showPinned ? 'rgba(255,215,0,0.2)' : 'rgba(255,255,255,0.05)', border: 'var(--glass-border)', borderRadius: '8px', padding: '6px 10px', cursor: 'pointer', color: '#FFD700', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <button 
+                onClick={() => setShowPinned(!showPinned)} 
+                className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold transition-all",
+                  showPinned ? "bg-yellow-400/20 border-yellow-400/50 text-yellow-500" : "bg-white/5 border-white/10 text-yellow-500/80 hover:bg-white/10"
+                )}
+              >
                 📌 {pinnedMessages.length}
               </button>
             )}
-            <button onClick={e => { e.stopPropagation(); setIsSearchOpen(!isSearchOpen); setSearchQuery(''); }} style={{ background: isSearchOpen ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)', border: 'var(--glass-border)', borderRadius: '8px', padding: '7px', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex' }}>
-              <Search size={16} />
+            <button 
+              onClick={() => { setIsSearchOpen(!isSearchOpen); setSearchQuery(''); }}
+              className={cn(
+                "p-2 rounded-lg border transition-all",
+                isSearchOpen ? "bg-indigo-500/20 border-indigo-500/50 text-indigo-400" : "bg-white/5 border-white/10 text-slate-400 hover:text-white"
+              )}
+            >
+              <Search size={18} />
             </button>
+            {isPowerUser && (
+              <button onClick={handleClearChat} className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition-all" title="Clear Chat">
+                <Trash2 size={18} />
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Search Bar */}
-        {isSearchOpen && (
-          <div style={{ padding: '10px 20px', borderBottom: 'var(--glass-border)', display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <Search size={15} color="var(--text-secondary)" />
-            <input autoFocus value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search messages..." style={{ flex: 1, background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none', fontSize: '0.9rem' }} />
-            {searchQuery && <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{displayedMessages.length} result(s)</span>}
-            <button onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}><X size={16} /></button>
-          </div>
-        )}
+        {/* Search & Pinned Panels */}
+        <AnimatePresence>
+          {isSearchOpen && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="px-5 py-3 border-b border-white/10 bg-indigo-500/5 flex items-center gap-3"
+            >
+              <Search size={16} className="text-indigo-400" />
+              <input 
+                autoFocus 
+                value={searchQuery} 
+                onChange={e => setSearchQuery(e.target.value)} 
+                placeholder="Search history..." 
+                className="bg-transparent border-none outline-none text-sm text-white flex-1"
+              />
+              <span className="text-[10px] font-bold text-slate-500 uppercase">{filteredMessages.length} results</span>
+              <button onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }} className="text-slate-500 hover:text-white"><X size={16} /></button>
+            </motion.div>
+          )}
 
-        {/* Pinned Messages Panel */}
-        {showPinned && pinnedMessages.length > 0 && (
-          <div style={{ background: 'rgba(255,215,0,0.05)', borderBottom: '1px solid rgba(255,215,0,0.2)', padding: '10px 20px' }}>
-            <p style={{ fontSize: '0.72rem', color: '#FFD700', marginBottom: '8px', fontWeight: '600' }}>📌 PINNED MESSAGES</p>
-            {pinnedMessages.map((pm, i) => (
-              <div key={i} style={{ fontSize: '0.85rem', color: 'var(--text-primary)', padding: '4px 0', borderBottom: i < pinnedMessages.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.72rem' }}>{pm.author}: </span>{pm.message || '[image]'}
-              </div>
+          {showPinned && pinnedMessages.length > 0 && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="px-5 py-3 border-b border-yellow-500/20 bg-yellow-500/5 flex flex-col gap-2 max-h-32 overflow-y-auto"
+            >
+              <p className="text-[10px] font-black text-yellow-500 uppercase tracking-widest">Pinned Messages</p>
+              {pinnedMessages.map((pm, i) => (
+                <div key={i} className="text-xs text-slate-300 flex gap-2">
+                  <span className="font-bold text-yellow-500/70">{pm.author}:</span>
+                  <span className="line-clamp-1 italic">{pm.message || '[Image]'}</span>
+                </div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Messages Container */}
+        <div 
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto px-5 py-6 flex flex-col gap-1 custom-scrollbar scroll-smooth"
+        >
+          <div className="flex-1" /> {/* Spacer to push messages to bottom */}
+          
+          {filteredMessages.length === 0 && searchQuery && (
+            <div className="py-20 text-center text-slate-500 italic">No search results for "{searchQuery}"</div>
+          )}
+          
+          <AnimatePresence initial={false}>
+            {filteredMessages.map((msg, idx) => (
+              <MessageBubble 
+                key={msg._id || idx} 
+                msg={msg} 
+                username={username} 
+                isHighlighted={!!searchQuery} 
+                onReact={handleReact} 
+                onEdit={handleEdit} 
+                onDelete={handleDelete} 
+                onPin={handlePin} 
+                isPowerUser={isPowerUser} 
+                searchQuery={searchQuery} 
+              />
             ))}
-          </div>
-        )}
+          </AnimatePresence>
 
-        {/* Messages */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {displayedMessages.length === 0 && searchQuery && (
-            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '40px' }}>No messages match "{searchQuery}"</p>
-          )}
-          {displayedMessages.map((msg, index) => (
-            <MessageBubble key={msg._id || index} msg={msg} username={username} isHighlighted={!!searchQuery} onReact={handleReact} onEdit={handleEdit} onDelete={handleDelete} onPin={handlePin} isPowerUser={isPowerUser} searchQuery={searchQuery} />
-          ))}
           {uploadingImage && imagePreview && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <div style={{ maxWidth: '160px', opacity: 0.6, background: 'rgba(99,102,241,0.2)', borderRadius: '12px', padding: '8px', textAlign: 'center' }}>
-                <img src={imagePreview} alt="uploading" style={{ maxWidth: '100%', borderRadius: '8px' }} />
-                <p style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', marginTop: '4px' }}>Uploading…</p>
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-end mb-4">
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-2 opacity-50 relative overflow-hidden">
+                <img src={imagePreview} className="max-w-[150px] rounded-xl" alt="uploading" />
+                <div className="absolute inset-x-0 bottom-0 h-1 bg-indigo-500 animate-[loading_2s_infinite]" />
               </div>
-            </div>
+            </motion.div>
           )}
+
           {typingUsers.length > 0 && (
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-              {typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...
-            </p>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 mb-4 ml-2">
+              <div className="flex gap-1">
+                <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" />
+              </div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic font-sans">
+                {typingUsers.join(', ')} {typingUsers.length === 1 ? 'is' : 'are'} typing...
+              </span>
+            </motion.div>
           )}
-          <div ref={messagesEndRef} />
+          <div ref={messagesEndRef} className="h-4" />
         </div>
 
-        {/* Admin clear bar */}
-        {isPowerUser && (
-          <div style={{ padding: '6px 20px', borderTop: '1px solid rgba(255,215,0,0.1)', background: 'rgba(255,215,0,0.03)', display: 'flex', justifyContent: 'flex-end' }}>
-            <button onClick={handleClearChat} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: 'var(--danger)', borderRadius: '8px', padding: '4px 12px', cursor: 'pointer', fontSize: '0.75rem' }}>🗑️ Clear Chat (Admin)</button>
-          </div>
-        )}
-
-        {/* Input */}
-        <div style={{ padding: '14px 20px', borderTop: 'var(--glass-border)', position: 'relative' }}>
-          {showEmojiPicker && (
-            <EmojiPicker onSelect={emoji => { setCurrentMessage(p => p + emoji); setShowEmojiPicker(false); msgInputRef.current?.focus(); }} onClose={() => setShowEmojiPicker(false)} />
+        {/* Scroll Bottom Fab */}
+        <AnimatePresence>
+          {showScrollBottom && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.5, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.5, y: 10 }}
+              onClick={() => scrollToBottom()}
+              className="absolute bottom-24 right-8 bg-indigo-600 text-white p-3 rounded-full shadow-2xl z-40 hover:bg-indigo-500 active:scale-95 transition-all border border-white/20"
+            >
+              <ChevronDown size={24} />
+            </motion.button>
           )}
-          <form onSubmit={sendMessage} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <input type="file" accept="image/*" ref={fileInputRef} style={{ display: 'none' }} onChange={handleImageUpload} />
-            <button type="button" onClick={e => { e.stopPropagation(); setShowEmojiPicker(!showEmojiPicker); }} style={{ background: showEmojiPicker ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.05)', border: 'var(--glass-border)', borderRadius: '11px', width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: showEmojiPicker ? 'var(--primary-accent)' : 'var(--text-secondary)', flexShrink: 0 }}>
-              <Smile size={17} />
+        </AnimatePresence>
+
+        {/* Input Bar */}
+        <div className="p-4 bg-white/5 backdrop-blur-xl border-t border-white/10 relative">
+          <AnimatePresence>
+            {showEmojiPicker && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+                className="absolute bottom-full left-4 mb-4 z-50 shadow-2xl"
+              >
+                <EmojiPicker onSelect={emoji => { setCurrentMessage(p => p + emoji); setShowEmojiPicker(false); msgInputRef.current?.focus(); }} onClose={() => setShowEmojiPicker(false)} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <form onSubmit={sendMessage} className="flex gap-2 items-center bg-black/30 p-2 rounded-2xl border border-white/10 focus-within:border-indigo-500/50 transition-colors">
+            <button 
+              type="button" 
+              onClick={e => { e.stopPropagation(); setShowEmojiPicker(!showEmojiPicker); }}
+              className={cn(
+                "p-3 rounded-xl transition-colors",
+                showEmojiPicker ? "bg-indigo-500/20 text-indigo-400" : "text-slate-400 hover:text-white"
+              )}
+            >
+              <Smile size={20} />
             </button>
-            <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingImage} style={{ background: 'rgba(255,255,255,0.05)', border: 'var(--glass-border)', borderRadius: '11px', width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: uploadingImage ? 'var(--primary-accent)' : 'var(--text-secondary)', flexShrink: 0 }}>
-              <Paperclip size={17} />
+            <button 
+              type="button" 
+              onClick={() => fileInputRef.current?.click()}
+              className="p-3 text-slate-400 hover:text-white rounded-xl transition-colors"
+            >
+              <Paperclip size={20} />
+              <input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
             </button>
-            <input ref={msgInputRef} type="text" className="input-base" placeholder={`Message ${isDM ? dmPartner : '#' + room}`} value={currentMessage} onChange={handleTyping} style={{ padding: '12px 16px', borderRadius: '20px', background: 'rgba(0,0,0,0.2)' }} />
-            <button type="submit" className="btn-primary" style={{ width: '46px', height: '46px', borderRadius: '50%', padding: 0, flexShrink: 0 }}>
-              <Send size={17} style={{ marginLeft: '2px' }} />
+            
+            <input 
+              ref={msgInputRef}
+              className="flex-1 bg-transparent border-none outline-none text-white text-sm px-2"
+              placeholder={`Message ${isDM ? dmPartner : '#' + room}`}
+              value={currentMessage}
+              onChange={handleTyping}
+            />
+            
+            <button 
+              type="submit" 
+              disabled={!currentMessage.trim()}
+              className="bg-indigo-600 text-white p-3 rounded-xl hover:bg-indigo-500 disabled:opacity-30 disabled:hover:bg-indigo-600 transition-all shadow-lg shadow-indigo-600/20"
+            >
+              <Send size={20} />
             </button>
           </form>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

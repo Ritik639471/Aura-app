@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Check, CheckCheck } from 'lucide-react';
+import { Check, CheckCheck, Copy, Check as CheckIcon } from 'lucide-react';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '../utils/cn';
 
 const API_URL = 'https://aura-app-keg8.onrender.com/api';
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
 
-// Extract first URL from text
 const extractUrl = (text) => {
   const match = text?.match(/https?:\/\/[^\s]+/);
   return match ? match[0] : null;
@@ -18,18 +19,31 @@ const LinkPreview = ({ url }) => {
       .then(r => setPreview(r.data))
       .catch(() => {});
   }, [url]);
+
   if (!preview || preview.error || !preview.title) return null;
+
   return (
-    <a href={url} target="_blank" rel="noopener noreferrer" style={{ display: 'block', marginTop: '8px', textDecoration: 'none' }}>
-      <div style={{ border: '1px solid rgba(255,255,255,0.12)', borderRadius: '10px', overflow: 'hidden', background: 'rgba(0,0,0,0.2)' }}>
-        {preview.image && <img src={preview.image} alt="" style={{ width: '100%', maxHeight: '120px', objectFit: 'cover' }} />}
-        <div style={{ padding: '8px 10px' }}>
-          <p style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', marginBottom: '2px' }}>{preview.domain}</p>
-          <p style={{ fontSize: '0.85rem', fontWeight: '600', color: '#fff', marginBottom: '2px' }}>{preview.title}</p>
-          {preview.description && <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{preview.description}</p>}
+    <motion.a 
+      href={url} 
+      target="_blank" 
+      rel="noopener noreferrer"
+      initial={{ opacity: 0, y: 5 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="block mt-3 no-underline group/link"
+    >
+      <div className="border border-white/10 rounded-xl overflow-hidden bg-black/40 hover:bg-black/60 transition-colors">
+        {preview.image && (
+          <img src={preview.image} alt="" className="w-full h-32 object-cover group-hover/link:scale-105 transition-transform duration-500" />
+        )}
+        <div className="p-3">
+          <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider mb-1 opacity-70">{preview.domain}</p>
+          <p className="text-sm font-bold text-white line-clamp-1 group-hover/link:text-indigo-300 transition-colors">{preview.title}</p>
+          {preview.description && (
+            <p className="text-xs text-slate-400 line-clamp-2 mt-1 leading-relaxed opacity-80">{preview.description}</p>
+          )}
         </div>
       </div>
-    </a>
+    </motion.a>
   );
 };
 
@@ -37,6 +51,7 @@ const MessageBubble = ({ msg, username, isHighlighted, onReact, onEdit, onDelete
   const [showActions, setShowActions] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(msg.message);
+  const [copied, setCopied] = useState(false);
   const isMe = msg.author === username;
   const isDeleted = !!msg.deletedAt;
   const linkUrl = !isDeleted && !msg.imageUrl ? extractUrl(msg.message) : null;
@@ -46,17 +61,23 @@ const MessageBubble = ({ msg, username, isHighlighted, onReact, onEdit, onDelete
     const parts = text.split(new RegExp(`(${searchQuery})`, 'gi'));
     return parts.map((p, i) =>
       p.toLowerCase() === searchQuery.toLowerCase()
-        ? <mark key={i} style={{ background: 'rgba(99,102,241,0.5)', color: '#fff', borderRadius: '3px', padding: '0 2px' }}>{p}</mark>
+        ? <mark key={i} className="bg-indigo-500/50 text-white rounded px-0.5">{p}</mark>
         : p
     );
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(msg.message || '');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const renderReadReceipt = () => {
     if (!isMe) return null;
     const readCount = msg.readBy?.filter(u => u !== username).length || 0;
     return readCount > 0
-      ? <CheckCheck size={13} style={{ color: 'var(--primary-accent)' }} />
-      : <Check size={13} style={{ color: 'rgba(255,255,255,0.5)' }} />;
+      ? <CheckCheck size={14} className="text-indigo-400" />
+      : <Check size={14} className="text-white/40" />;
   };
 
   const handleEditSubmit = (e) => {
@@ -65,51 +86,115 @@ const MessageBubble = ({ msg, username, isHighlighted, onReact, onEdit, onDelete
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: '4px' }}
-      onMouseEnter={() => setShowActions(true)} onMouseLeave={() => setShowActions(false)}
+    <motion.div 
+      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      className={cn(
+        "flex flex-col mb-4 group",
+        isMe ? "items-end" : "items-start"
+      )}
+      onMouseEnter={() => setShowActions(true)} 
+      onMouseLeave={() => setShowActions(false)}
     >
-      <div style={{ maxWidth: '70%', position: 'relative' }}>
-        {/* Action bar */}
-        {showActions && !isDeleted && (
-          <div style={{ position: 'absolute', [isMe ? 'left' : 'right']: '-90px', top: '0', display: 'flex', gap: '4px', background: 'rgba(20,20,30,0.85)', backdropFilter: 'blur(8px)', padding: '4px 6px', borderRadius: '8px', zIndex: 5, whiteSpace: 'nowrap' }}>
-            {isMe && <button onClick={() => setEditing(true)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.8rem', padding: '2px 4px' }} title="Edit">✏️</button>}
-            {(isMe || isPowerUser) && <button onClick={() => onDelete(msg._id, msg.room)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.8rem', padding: '2px 4px' }} title="Delete">🗑️</button>}
-            {isPowerUser && <button onClick={() => onPin(msg._id, msg.room)} style={{ background: 'none', border: 'none', color: msg.pinned ? '#FFD700' : 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.8rem', padding: '2px 4px' }} title={msg.pinned ? 'Unpin' : 'Pin'}>📌</button>}
-          </div>
+      <div className="max-w-[85%] md:max-w-[70%] relative">
+        {/* Author Label */}
+        {!isMe && !isDeleted && (
+          <span className="text-[11px] font-black text-indigo-400/80 mb-1 ml-2 uppercase tracking-widest">{msg.author}</span>
         )}
 
-        {/* Bubble */}
-        <div style={{
-          background: isDeleted ? 'rgba(255,255,255,0.03)' : isHighlighted ? 'rgba(99,102,241,0.25)' : isMe ? 'linear-gradient(135deg, var(--primary-accent), var(--secondary-accent))' : 'rgba(255,255,255,0.05)',
-          border: isDeleted || !isMe ? 'var(--glass-border)' : 'none',
-          padding: '10px 14px', borderRadius: isMe ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-          boxShadow: isMe && !isDeleted ? '0 4px 14px var(--primary-glow)' : 'none', transition: 'background 0.3s'
-        }}>
-          {!isMe && !isDeleted && <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: '600' }}>{msg.author}</div>}
+        {/* Action bar on hover */}
+        <AnimatePresence>
+          {showActions && !isDeleted && (
+            <motion.div 
+              initial={{ opacity: 0, [isMe ? 'x' : 'x']: isMe ? -20 : 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, [isMe ? 'x' : 'x']: isMe ? -10 : 10 }}
+              className={cn(
+                "absolute -top-10 flex gap-1.5 bg-slate-900/90 backdrop-blur-md border border-white/10 p-1.5 rounded-xl shadow-2xl z-20",
+                isMe ? "right-0" : "left-0"
+              )}
+            >
+              <button 
+                onClick={handleCopy} 
+                className={cn("p-1.5 rounded-lg transition-colors", copied ? "text-emerald-400 bg-emerald-400/10" : "text-slate-400 hover:text-white hover:bg-white/10")} 
+                title="Copy"
+              >
+                {copied ? <CheckIcon size={14} /> : <Copy size={14} />}
+              </button>
+              {isMe && (
+                <button onClick={() => setEditing(true)} className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Edit">
+                  ✏️
+                </button>
+              )}
+              {(isMe || isPowerUser) && (
+                <button onClick={() => onDelete(msg._id, msg.room)} className="p-1.5 text-slate-400 hover:text-white hover:bg-red-500/20 rounded-lg transition-colors" title="Delete">
+                  🗑️
+                </button>
+              )}
+              {isPowerUser && (
+                <button onClick={() => onPin(msg._id, msg.room)} className={cn("p-1.5 rounded-lg transition-colors", msg.pinned ? "text-yellow-400 bg-yellow-400/10" : "text-slate-400 hover:text-white hover:bg-white/10")} title={msg.pinned ? 'Unpin' : 'Pin'}>
+                  📌
+                </button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
+        {/* Bubble */}
+        <div className={cn(
+          "relative px-4 py-3 rounded-2xl transition-all duration-300 shadow-lg",
+          isDeleted ? "bg-white/5 border border-white/5 italic text-slate-500 text-sm" :
+          isHighlighted ? "bg-indigo-600/30 border border-indigo-500/50 shadow-indigo-500/20" :
+          isMe ? "bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-tr-none shadow-indigo-500/20" : 
+          "bg-white/5 border border-white/10 text-white rounded-tl-none hover:bg-white/10"
+        )}>
           {isDeleted ? (
-            <div style={{ fontStyle: 'italic', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>🚫 This message was deleted</div>
+            <div className="flex items-center gap-2 opacity-60">
+              <span className="text-lg">🚫</span> This message was deleted
+            </div>
           ) : editing ? (
-            <form onSubmit={handleEditSubmit} style={{ display: 'flex', gap: '6px' }}>
-              <input value={editText} onChange={e => setEditText(e.target.value)} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '6px', color: '#fff', padding: '4px 8px', fontSize: '0.9rem', flex: 1 }} autoFocus />
-              <button type="submit" style={{ background: 'var(--primary-accent)', border: 'none', borderRadius: '6px', color: '#fff', padding: '4px 8px', cursor: 'pointer' }}>✓</button>
-              <button type="button" onClick={() => setEditing(false)} style={{ background: 'rgba(239,68,68,0.3)', border: 'none', borderRadius: '6px', color: '#fff', padding: '4px 8px', cursor: 'pointer' }}>✕</button>
+            <form onSubmit={handleEditSubmit} className="flex gap-2 min-w-[200px]">
+              <input 
+                value={editText} 
+                onChange={e => setEditText(e.target.value)} 
+                className="bg-black/40 border border-white/20 rounded-lg px-2 py-1 text-sm text-white w-full outline-none focus:border-indigo-400 transition-colors"
+                autoFocus 
+              />
+              <button type="submit" className="text-emerald-400 hover:bg-emerald-400/10 p-1.5 rounded-lg">✓</button>
+              <button type="button" onClick={() => setEditing(false)} className="text-red-400 hover:bg-red-400/10 p-1.5 rounded-lg">✕</button>
             </form>
           ) : (
             <>
               {msg.imageUrl && (
-                <a href={msg.imageUrl} target="_blank" rel="noopener noreferrer">
-                  <img src={msg.imageUrl} alt="attachment" style={{ maxWidth: '220px', maxHeight: '180px', objectFit: 'cover', borderRadius: '8px', display: 'block', marginBottom: msg.message ? '6px' : 0 }} />
-                </a>
+                <motion.a 
+                  href={msg.imageUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  whileHover={{ scale: 1.02 }}
+                  className="block mb-2 overflow-hidden rounded-xl border border-white/10 shadow-inner"
+                >
+                  <img src={msg.imageUrl} alt="attachment" className="max-w-full max-h-72 object-contain" />
+                </motion.a>
               )}
-              {msg.message && <div style={{ lineHeight: '1.5', color: isMe ? '#fff' : 'var(--text-primary)', wordBreak: 'break-word' }}>{highlightText(msg.message)}</div>}
+              {msg.message && (
+                <div className={cn(
+                  "text-[0.95rem] leading-relaxed break-words font-medium",
+                  isMe ? "text-white" : "text-white/95"
+                )}>
+                  {highlightText(msg.message)}
+                </div>
+              )}
               {linkUrl && <LinkPreview url={linkUrl} />}
             </>
           )}
 
+          {/* Timestamp & Meta */}
           {!isDeleted && (
-            <div style={{ fontSize: '0.62rem', color: isMe ? 'rgba(255,255,255,0.6)' : 'var(--text-secondary)', marginTop: '4px', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '4px' }}>
-              {msg.edited && <span style={{ fontStyle: 'italic', marginRight: '4px' }}>edited</span>}
+            <div className={cn(
+              "flex items-center justify-end gap-1.5 mt-1.5 text-[10px] font-bold uppercase tracking-tighter opacity-70",
+              isMe ? "text-white/80" : "text-slate-400"
+            )}>
+              {msg.edited && <span className="mr-1 lowercase opacity-50">edited</span>}
               {msg.time} {renderReadReceipt()}
             </div>
           )}
@@ -117,25 +202,57 @@ const MessageBubble = ({ msg, username, isHighlighted, onReact, onEdit, onDelete
 
         {/* Reactions */}
         {!isDeleted && msg.reactions?.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
+          <div className={cn(
+            "flex flex-wrap gap-1 mt-1.5",
+            isMe ? "justify-end" : "justify-start"
+          )}>
             {msg.reactions.map((r, i) => (
-              <button key={i} onClick={() => onReact(msg._id, r.emoji)} style={{ background: r.users.includes(username) ? 'rgba(99,102,241,0.3)' : 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '3px 8px', cursor: 'pointer', fontSize: '0.8rem', color: 'var(--text-primary)' }}>
-                {r.emoji} {r.users.length}
-              </button>
+              <motion.button 
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                key={i} 
+                onClick={() => onReact(msg._id, r.emoji)} 
+                className={cn(
+                  "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-black border transition-all shadow-sm",
+                  r.users.includes(username) 
+                    ? "bg-indigo-500/20 border-indigo-500/50 text-indigo-300" 
+                    : "bg-white/5 border-white/10 text-white/80 hover:bg-white/10"
+                )}
+              >
+                <span>{r.emoji}</span>
+                <span className="opacity-70">{r.users.length}</span>
+              </motion.button>
             ))}
           </div>
         )}
 
-        {/* Emoji reaction picker on hover */}
-        {showActions && !isDeleted && msg._id && (
-          <div style={{ position: 'absolute', [isMe ? 'right' : 'left']: 0, bottom: msg.reactions?.length > 0 ? '32px' : '-28px', background: 'rgba(20,20,30,0.9)', backdropFilter: 'blur(12px)', border: 'var(--glass-border)', borderRadius: '16px', padding: '5px 8px', display: 'flex', gap: '3px', zIndex: 10 }}>
-            {REACTION_EMOJIS.map(emoji => (
-              <button key={emoji} onClick={() => onReact(msg._id, emoji)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', padding: '3px', borderRadius: '6px' }} onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'} onMouseOut={e => e.currentTarget.style.background = 'none'}>{emoji}</button>
-            ))}
-          </div>
-        )}
+        {/* Quick Reaction Modal on hover */}
+        <AnimatePresence>
+          {showActions && !isDeleted && msg._id && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10, scale: 0.8 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 5, scale: 0.9 }}
+              className={cn(
+                "absolute bg-slate-900/95 border border-white/10 rounded-2xl p-1.5 flex gap-1 shadow-2xl z-30",
+                isMe ? "right-0" : "left-0",
+                msg.reactions?.length > 0 ? "top-[calc(100%+8px)]" : "top-[calc(100%+4px)]"
+              )}
+            >
+              {REACTION_EMOJIS.map(emoji => (
+                <button 
+                  key={emoji} 
+                  onClick={() => onReact(msg._id, emoji)} 
+                  className="p-1.5 rounded-xl text-xl hover:bg-white/10 hover:scale-125 transition-all"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

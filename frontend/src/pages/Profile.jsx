@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, Save } from 'lucide-react';
+import { ArrowLeft, Camera, Save, User, CheckCircle2 } from 'lucide-react';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
+
+import TiltedCard from '../components/ReactBits/TiltedCard';
+import BlurText from '../components/ReactBits/BlurText';
+import ShinyText from '../components/ReactBits/ShinyText';
+import { cn } from '../utils/cn';
 
 const API_URL = 'https://aura-app-keg8.onrender.com/api';
 
@@ -17,70 +23,171 @@ const Profile = () => {
   const fileRef = useRef(null);
 
   useEffect(() => {
+    if (!token) { navigate('/login'); return; }
     axios.get(`${API_URL}/profile/${username}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(r => setProfile(r.data))
       .catch(() => {});
-  }, [username, token]);
+  }, [username, token, navigate]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
       const fd = new FormData();
-      fd.append('bio', profile.bio);
-      fd.append('status', profile.status);
+      fd.append('bio', profile.bio || '');
+      fd.append('status', profile.status || '');
       if (file) fd.append('avatar', file);
       const res = await axios.put(`${API_URL}/profile`, fd, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' } });
       setProfile(res.data);
       setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    } catch (e) { console.error(e); }
-    setSaving(false);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (e) { 
+      console.error(e); 
+    } finally {
+      setSaving(false);
+    }
   };
 
   const avatarSrc = preview || profile.avatar;
 
   return (
-    <div className="login-wrapper" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div className="glass-panel" style={{ padding: '40px', width: '100%', maxWidth: '460px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderBottom: 'var(--glass-border)', paddingBottom: '20px' }}>
-          <button onClick={() => navigate('/rooms')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><ArrowLeft size={20} /></button>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: '700' }}>My Profile</h1>
-        </div>
+    <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 bg-slate-950/20 overflow-y-auto">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-panel p-8 md:p-12 w-full max-w-lg flex flex-col gap-8 relative overflow-hidden"
+      >
+        {/* Background Glow */}
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-600/20 blur-3xl rounded-full" />
+        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-violet-600/20 blur-3xl rounded-full" />
 
-        {/* Avatar */}
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => fileRef.current?.click()}>
-            <div style={{ width: '90px', height: '90px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary-accent), var(--secondary-accent))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.2rem', fontWeight: '700', overflow: 'hidden', border: '3px solid var(--primary-accent)' }}>
-              {avatarSrc ? <img src={avatarSrc} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : username?.[0]?.toUpperCase()}
-            </div>
-            <div style={{ position: 'absolute', bottom: '2px', right: '2px', width: '26px', height: '26px', background: 'var(--primary-accent)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Camera size={13} color="white" />
-            </div>
+        <div className="flex items-center gap-4 relative z-10 border-b border-white/10 pb-6">
+          <button 
+            onClick={() => navigate('/rooms')} 
+            className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all"
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <div>
+            <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-2">
+              <User className="text-indigo-400" size={24} />
+              My Profile
+            </h1>
           </div>
-          <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) { setFile(f); setPreview(URL.createObjectURL(f)); } }} />
         </div>
 
-        <div style={{ textAlign: 'center' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>@{username}</h2>
+        {/* Avatar Section */}
+        <div className="flex flex-col items-center gap-6 relative z-10">
+          <div className="w-40 h-40 group relative">
+            {avatarSrc ? (
+              <TiltedCard
+                imageSrc={avatarSrc}
+                altText="Profile Picture"
+                captionText="Click to change"
+                containerClassName="w-full h-full cursor-pointer"
+                imageClassName="rounded-3xl"
+                showTooltip={true}
+                onClick={() => fileRef.current?.click()}
+              />
+            ) : (
+              <motion.div 
+                whileHover={{ scale: 1.05, rotate: 2 }}
+                onClick={() => fileRef.current?.click()}
+                className="w-full h-full rounded-3xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-6xl font-black text-white shadow-2xl shadow-indigo-500/20 cursor-pointer border-4 border-white/10"
+              >
+                {username?.[0]?.toUpperCase()}
+              </motion.div>
+            )}
+            
+            <button 
+              onClick={() => fileRef.current?.click()}
+              className="absolute -bottom-3 -right-3 w-10 h-10 bg-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-xl border-2 border-slate-900 group-hover:scale-110 transition-transform z-20"
+            >
+              <Camera size={20} />
+            </button>
+          </div>
+          
+          <input 
+            ref={fileRef} 
+            type="file" 
+            accept="image/*" 
+            className="hidden" 
+            onChange={e => { 
+              const f = e.target.files?.[0]; 
+              if (f) { setFile(f); setPreview(URL.createObjectURL(f)); } 
+            }} 
+          />
+          
+          <div className="text-center">
+            <BlurText 
+              text={`@${username}`} 
+              className="text-2xl font-bold tracking-tight text-white" 
+              delay={100} 
+            />
+            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mt-1 opacity-70">Authenticated Member</p>
+          </div>
         </div>
 
-        {/* Status */}
-        <div>
-          <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>Status</label>
-          <input className="input-base" value={profile.status || ''} onChange={e => setProfile(p => ({ ...p, status: e.target.value }))} placeholder="👋 Hey there!" maxLength={80} />
+        {/* Form Fields */}
+        <div className="flex flex-col gap-6 relative z-10">
+          <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
+            <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 block ml-1">Current Status</label>
+            <input 
+              className="input-base !bg-black/20 !border-white/5 focus:!border-indigo-500/50" 
+              value={profile.status || ''} 
+              onChange={e => setProfile(p => ({ ...p, status: e.target.value }))} 
+              placeholder="👋 What's on your mind?" 
+              maxLength={80} 
+            />
+          </motion.div>
+
+          <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
+            <div className="flex justify-between items-center mb-2 ml-1">
+              <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest block">Biography</label>
+              <span className="text-[10px] font-bold text-slate-600">{(profile.bio || '').length}/160</span>
+            </div>
+            <textarea 
+              className="input-base !bg-black/20 !border-white/5 focus:!border-indigo-500/50 min-h-[100px] py-3 leading-relaxed resize-none" 
+              value={profile.bio || ''} 
+              onChange={e => setProfile(p => ({ ...p, bio: e.target.value }))} 
+              placeholder="Tell the community about yourself..." 
+              maxLength={160} 
+              rows={3} 
+            />
+          </motion.div>
         </div>
 
-        {/* Bio */}
-        <div>
-          <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>Bio</label>
-          <textarea className="input-base" value={profile.bio || ''} onChange={e => setProfile(p => ({ ...p, bio: e.target.value }))} placeholder="Tell people about yourself..." maxLength={160} rows={3} style={{ resize: 'none', fontFamily: 'inherit' }} />
-          <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', textAlign: 'right', marginTop: '4px' }}>{(profile.bio || '').length}/160</p>
-        </div>
-
-        <button onClick={handleSave} disabled={saving} className="btn-primary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-          <Save size={16} /> {saving ? 'Saving...' : saved ? '✓ Saved!' : 'Save Profile'}
-        </button>
-      </div>
+        <motion.button 
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={handleSave} 
+          disabled={saving} 
+          className={cn(
+            "w-full py-4 rounded-2xl flex items-center justify-center gap-3 font-bold text-sm tracking-wide transition-all shadow-xl shadow-indigo-500/10",
+            saved ? "bg-emerald-500 text-white" : "bg-indigo-600 text-white hover:bg-indigo-500 active:bg-indigo-700"
+          )}
+        >
+          {saving ? (
+            <>
+              <motion.div 
+                animate={{ rotate: 360 }} 
+                transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+              />
+              <span>Saving Changes...</span>
+            </>
+          ) : saved ? (
+            <>
+              <CheckCircle2 size={20} />
+              <span>Profile Saved!</span>
+            </>
+          ) : (
+            <>
+              <Save size={20} />
+              <span>Update Profile</span>
+            </>
+          )}
+        </motion.button>
+      </motion.div>
     </div>
   );
 };

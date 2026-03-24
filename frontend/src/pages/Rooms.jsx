@@ -2,16 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Hash, Plus, Trash2, LogOut, Search, MessageCircle, X, User } from 'lucide-react';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
+
+import SpotlightCard from '../components/ReactBits/SpotlightCard';
+import ShinyText from '../components/ReactBits/ShinyText';
+import BlurText from '../components/ReactBits/BlurText';
+import VariableProximity from '../components/ReactBits/VariableProximity';
 
 const API_URL = 'https://aura-app-keg8.onrender.com/api';
 
 const Rooms = () => {
-  const [activeTab, setActiveTab] = useState('channels'); // 'channels' | 'dms'
+  const [activeTab, setActiveTab] = useState('channels');
   const [rooms, setRooms] = useState([]);
   const [newRoomName, setNewRoomName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [dmSearch, setDmSearch] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   const token = localStorage.getItem('token');
@@ -29,6 +36,8 @@ const Rooms = () => {
       setRooms(res.data);
     } catch (err) {
       if (err.response?.status === 401) handleLogout();
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -92,128 +101,233 @@ const Rooms = () => {
   };
 
   return (
-    <div className="login-wrapper" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div className="glass-panel" style={{ padding: '40px', width: '100%', maxWidth: '620px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: 'var(--glass-border)', paddingBottom: '20px' }}>
+    <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 overflow-y-auto">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="glass-panel p-6 md:p-10 w-full max-w-3xl flex flex-col gap-6"
+      >
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 pb-6 gap-4">
           <div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: '700' }}>Aura</h1>
-            <p style={{ color: 'var(--text-secondary)' }}>Welcome back, {username}</p>
+            <div className="flex items-center gap-2">
+              <ShinyText text="Aura" className="text-4xl font-bold tracking-tight" speed={3} />
+            </div>
+            <BlurText 
+              text={`Welcome back, ${username}`} 
+              className="text-slate-400 mt-1" 
+              delay={50}
+              animateBy="words"
+            />
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={() => navigate('/profile')} style={{ background: 'rgba(99,102,241,0.1)', color: 'var(--primary-accent)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '500' }}>
-              <User size={16} /> Profile
+          <div className="flex gap-3 w-full md:w-auto">
+            <button 
+              onClick={() => navigate('/profile')} 
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/25 rounded-xl px-4 py-2.5 font-medium hover:bg-indigo-500/20 transition-all"
+            >
+              <User size={18} /> Profile
             </button>
-            <button onClick={handleLogout} className="btn-primary" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.2)', boxShadow: 'none' }}>
+            <button 
+              onClick={handleLogout} 
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-xl px-4 py-2.5 font-medium hover:bg-red-500/20 transition-all"
+            >
               <LogOut size={18} /> Logout
             </button>
           </div>
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="flex p-1 bg-white/5 rounded-2xl">
           {['channels', 'dms'].map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)} style={{
-              padding: '10px 20px', borderRadius: '10px', border: 'none', cursor: 'pointer', fontWeight: '600', fontSize: '0.875rem',
-              background: activeTab === tab ? 'var(--primary-accent)' : 'rgba(255,255,255,0.05)',
-              color: activeTab === tab ? '#fff' : 'var(--text-secondary)', transition: '0.2s'
-            }}>
-              {tab === 'channels' ? <><Hash size={16} style={{ display: 'inline', marginRight: '6px' }} />Channels</> : <><MessageCircle size={16} style={{ display: 'inline', marginRight: '6px' }} />Direct Messages</>}
+            <button 
+              key={tab} 
+              onClick={() => setActiveTab(tab)} 
+              className={cn(
+                "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all duration-300",
+                activeTab === tab 
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30" 
+                  : "text-slate-400 hover:text-white hover:bg-white/5"
+              )}
+            >
+              {tab === 'channels' ? <Hash size={18} /> : <MessageCircle size={18} />}
+              {tab === 'channels' ? 'Channels' : 'Direct Messages'}
             </button>
           ))}
         </div>
 
-        {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', padding: '10px', borderRadius: '8px', fontSize: '0.875rem', display: 'flex', justifyContent: 'space-between' }}>
-            {error}<X size={16} style={{ cursor: 'pointer' }} onClick={() => setError('')} />
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-red-500/10 text-red-500 p-4 rounded-xl text-sm flex justify-between items-center"
+            >
+              {error}
+              <X size={18} className="cursor-pointer opacity-70 hover:opacity-100" onClick={() => setError('')} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {activeTab === 'channels' && (
-          <>
-            <form onSubmit={handleCreateRoom} style={{ display: 'flex', gap: '12px' }}>
-              <input className="input-base" type="text" placeholder="New channel name..." value={newRoomName} onChange={(e) => setNewRoomName(e.target.value)} />
-              <button type="submit" className="btn-primary" style={{ padding: '12px 20px', flexShrink: 0 }}><Plus size={18} /> Create</button>
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex flex-col gap-5"
+          >
+            <form onSubmit={handleCreateRoom} className="flex gap-3">
+              <input 
+                className="input-base !bg-black/20" 
+                type="text" 
+                placeholder="New channel name..." 
+                value={newRoomName} 
+                onChange={(e) => setNewRoomName(e.target.value)} 
+              />
+              <button type="submit" className="btn-primary !px-6 whitespace-nowrap">
+                <Plus size={20} /> Create
+              </button>
             </form>
 
-            <div style={{ position: 'relative' }}>
-              <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-              <input className="input-base" type="text" placeholder="Search channels..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ paddingLeft: '48px', background: 'rgba(0,0,0,0.2)' }} />
+            <div className="relative group">
+              <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+              <input 
+                className="input-base !pl-12 !bg-black/20" 
+                type="text" 
+                placeholder="Search channels..." 
+                value={searchQuery} 
+                onChange={(e) => setSearchQuery(e.target.value)} 
+              />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '380px', overflowY: 'auto', paddingRight: '8px' }}>
-              {publicRooms.length === 0 ? (
-                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '20px' }}>No channels found.</p>
+            <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              {loading ? (
+                Array(3).fill(0).map((_, i) => (
+                  <div key={i} className="h-20 rounded-2xl bg-white/5 animate-pulse" />
+                ))
+              ) : publicRooms.length === 0 ? (
+                <div className="text-center py-12 text-slate-500 italic">No channels found.</div>
               ) : (
-                publicRooms.map(room => {
+                publicRooms.map((room, index) => {
                   const isMember = room.members?.some(m => m._id === userId || m === userId);
                   return (
-                    <div key={room._id} onClick={() => handleEnterRoom(room.name, isMember)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--surface-border)', cursor: 'pointer', transition: '0.2s' }}
-                      onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-                      onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+                    <motion.div
+                      key={room._id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Hash color="var(--primary-accent)" size={20} />
+                      <SpotlightCard 
+                        className="!p-4 !bg-white/5 hover:!bg-white/10 cursor-pointer border-white/5 transition-all"
+                        onClick={() => handleEnterRoom(room.name, isMember)}
+                      >
+                        <div className="flex justify-between items-center w-full">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                              <Hash className="text-indigo-400" size={24} />
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-lg">{room.name}</h3>
+                              <p className="text-xs text-slate-400 font-medium">
+                                <span className="text-indigo-400 inline-block mr-1">●</span>
+                                {room.members?.length || 0} members
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
+                            {!isMember ? (
+                              <button 
+                                onClick={e => handleJoinAction(room._id, e)} 
+                                className="bg-white/10 hover:bg-indigo-600 text-white rounded-lg px-4 py-2 text-sm font-semibold transition-all"
+                              >
+                                Join
+                              </button>
+                            ) : (
+                              <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 bg-emerald-400/10 px-3 py-1.5 rounded-full uppercase tracking-wider">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                Member
+                              </span>
+                            )}
+                            {room.creator?._id === userId && (
+                              <button 
+                                onClick={e => handleDeleteRoom(room._id, e)} 
+                                className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                              >
+                                <Trash2 size={20} />
+                              </button>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <h3 style={{ fontSize: '1rem', fontWeight: '600' }}>{room.name}</h3>
-                          <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{room.members?.length || 0} member(s)</p>
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        {!isMember ? (
-                          <button onClick={e => handleJoinAction(room._id, e)} className="btn-primary" style={{ padding: '6px 14px', fontSize: '0.8rem' }}>Join</button>
-                        ) : (
-                          <span style={{ fontSize: '0.8rem', color: 'var(--success)', fontWeight: '500' }}>✓ Member</span>
-                        )}
-                        {room.creator?._id === userId && (
-                          <button onClick={e => handleDeleteRoom(room._id, e)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }} onMouseOver={e => e.currentTarget.style.color = 'var(--danger)'} onMouseOut={e => e.currentTarget.style.color = 'var(--text-secondary)'}>
-                            <Trash2 size={18} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                      </SpotlightCard>
+                    </motion.div>
                   );
                 })
               )}
             </div>
-          </>
+          </motion.div>
         )}
 
         {activeTab === 'dms' && (
-          <>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <input className="input-base" type="text" placeholder="Enter username to message..." value={dmSearch} onChange={e => setDmSearch(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleStartDM(dmSearch); }} />
-              <button onClick={() => handleStartDM(dmSearch)} className="btn-primary" style={{ padding: '12px 20px', flexShrink: 0 }}>Open DM</button>
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex flex-col gap-5"
+          >
+            <div className="flex gap-3">
+              <input 
+                className="input-base !bg-black/20" 
+                type="text" 
+                placeholder="Enter username to message..." 
+                value={dmSearch} 
+                onChange={e => setDmSearch(e.target.value)} 
+                onKeyDown={e => { if (e.key === 'Enter') handleStartDM(dmSearch); }} 
+              />
+              <button onClick={() => handleStartDM(dmSearch)} className="btn-primary !px-6 whitespace-nowrap">
+                Open DM
+              </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '380px', overflowY: 'auto' }}>
-              {myDMs.length === 0 ? (
-                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '20px' }}>No DMs yet. Type a username above!</p>
+            <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              {loading ? (
+                Array(3).fill(0).map((_, i) => (
+                  <div key={i} className="h-20 rounded-2xl bg-white/5 animate-pulse" />
+                ))
+              ) : myDMs.length === 0 ? (
+                <div className="text-center py-12 text-slate-500 italic">No DMs yet. Type a username above!</div>
               ) : (
-                myDMs.map(room => {
+                myDMs.map((room, index) => {
                   const partner = getDmPartner(room);
                   return (
-                    <div key={room._id} onClick={() => navigate('/chat', { state: { room: room.name, isDM: true, dmPartner: partner } })} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--surface-border)', cursor: 'pointer', transition: '0.2s' }}
-                      onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-                      onMouseOut={e => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+                    <motion.div
+                      key={room._id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
                     >
-                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary-accent), var(--secondary-accent))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '1.1rem' }}>
-                        {partner[0]?.toUpperCase()}
-                      </div>
-                      <div>
-                        <h3 style={{ fontWeight: '600' }}>{partner}</h3>
-                        <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Direct Message</p>
-                      </div>
-                    </div>
+                      <SpotlightCard 
+                        className="!p-4 !bg-white/5 hover:!bg-white/10 cursor-pointer border-white/5 transition-all"
+                        onClick={() => navigate('/chat', { state: { room: room.name, isDM: true, dmPartner: partner } })}
+                      >
+                        <div className="flex items-center gap-4 w-full">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-xl font-black text-white shadow-lg shadow-indigo-500/20">
+                            {partner[0]?.toUpperCase()}
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-lg tracking-tight">{partner}</h3>
+                            <p className="text-xs text-slate-400 font-medium tracking-wide flex items-center gap-1.5 uppercase">
+                              <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                              Direct Message
+                            </p>
+                          </div>
+                        </div>
+                      </SpotlightCard>
+                    </motion.div>
                   );
                 })
               )}
             </div>
-          </>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 };
