@@ -19,21 +19,16 @@ const Layout = ({ children }) => {
         />
       )}
 
-      <div className={cn(
-        "sidebar-secondary",
-        isLeftSidebarOpen ? "open" : ""
-      )}>
-        <SidebarSecondary />
-      </div>
+      <SidebarSecondary isOpen={isLeftSidebarOpen} />
 
-      <main className="main-content flex flex-col min-w-0 bg-slate-950/20">
+      <main className="main-content flex flex-col min-w-0 bg-slate-950/20 relative">
         {/* Mobile Nav Toggle */}
         <div className="md:hidden absolute top-4 left-4 z-[60]">
           <button 
             onClick={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
-            className="p-2 bg-slate-900 border border-white/10 rounded-xl text-slate-400 hover:text-white"
+            className="p-3 bg-slate-900 border border-white/10 rounded-2xl text-slate-400 hover:text-white shadow-2xl"
           >
-            {isLeftSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+            {isLeftSidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
         {children}

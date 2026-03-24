@@ -8,8 +8,8 @@ const SidebarPrimary = () => {
   const location = useLocation();
 
   const navItems = [
-    { id: 'rooms', icon: Home, path: '/rooms', label: 'Home' },
-    { id: 'dms', icon: MessageCircle, path: '/chat', label: 'Direct Messages', state: { isDM: true } },
+    { id: 'home', icon: Home, path: '/rooms', label: 'Home' },
+    { id: 'dms', icon: MessageCircle, path: '/rooms', label: 'Direct Messages', state: { activeTab: 'dms' } },
     { id: 'explore', icon: Compass, path: '/rooms', label: 'Explore', state: { activeTab: 'discover' } },
   ];
 
@@ -36,7 +36,7 @@ const SidebarPrimary = () => {
                   : "bg-white/5 text-slate-400 hover:bg-indigo-600 hover:rounded-xl hover:text-white"
               )}
             >
-              <item.icon size={24} />
+              <item.icon size={26} strokeWidth={2.5} />
               
               {/* Tooltip (Desktop) */}
               <div className="absolute left-16 bg-slate-900 border border-white/10 px-3 py-1.5 rounded-lg text-xs font-bold text-white whitespace-nowrap opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all pointer-events-none z-50">
@@ -59,8 +59,11 @@ const SidebarPrimary = () => {
         >
           <Plus size={24} />
         </button>
-        <button className="w-12 h-12 rounded-3xl bg-white/5 text-slate-400 flex items-center justify-center hover:bg-white/10 transition-all">
-          <Settings size={20} />
+        <button 
+          onClick={() => navigate('/profile')}
+          className="w-12 h-12 rounded-3xl bg-white/5 text-slate-400 flex items-center justify-center hover:bg-white/10 transition-all"
+        >
+          <Settings size={22} />
         </button>
       </div>
     </aside>

@@ -8,7 +8,7 @@ import TiltedCard from './ReactBits/TiltedCard';
 
 const API_URL = 'https://aura-app-keg8.onrender.com/api';
 
-const SidebarSecondary = () => {
+const SidebarSecondary = ({ isOpen }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [rooms, setRooms] = useState([]);
@@ -45,20 +45,20 @@ const SidebarSecondary = () => {
   const myDMs = rooms.filter(r => r.isDirectMessage);
 
   return (
-    <aside className="sidebar-secondary">
+    <aside className={cn("sidebar-secondary", isOpen && "open")}>
       {/* Search/Header Area */}
-      <div className="p-4 border-b border-white/5">
-        <button className="w-full bg-black/40 border border-white/5 rounded-xl py-2 px-3 flex items-center justify-between text-slate-400 group hover:border-white/10 transition-all">
-          <span className="text-xs font-bold uppercase tracking-widest italic">Aura Chat</span>
-          <ChevronDown size={14} className="group-hover:text-white transition-colors" />
+      <div className="p-5 border-b border-white/5">
+        <button className="w-full bg-black/40 border border-white/5 rounded-2xl py-3 px-4 flex items-center justify-between text-slate-400 group hover:border-white/10 transition-all">
+          <span className="text-sm font-black uppercase tracking-widest italic text-indigo-400">Aura Chat</span>
+          <ChevronDown size={18} className="group-hover:text-white transition-colors" />
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-6">
         {/* Joined Channels */}
         <section>
-          <div className="flex items-center justify-between px-2 mb-2 group">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Channels</h3>
+          <div className="flex items-center justify-between px-2 mb-3 group">
+            <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Channels</h3>
             <button 
               onClick={() => navigate('/rooms', { state: { openCreateModal: true } })}
               className="text-slate-500 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
@@ -87,8 +87,8 @@ const SidebarSecondary = () => {
 
         {/* Direct Messages */}
         <section>
-          <div className="flex items-center justify-between px-2 mb-2">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Direct Messages</h3>
+          <div className="flex items-center justify-between px-2 mb-3">
+            <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Direct Messages</h3>
           </div>
           <div className="space-y-0.5">
             {myDMs.map(dm => {
@@ -137,8 +137,8 @@ const SidebarSecondary = () => {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-bold truncate">@{username}</p>
-            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Online
+            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-1.5 mt-0.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Online
             </p>
           </div>
           <button 
