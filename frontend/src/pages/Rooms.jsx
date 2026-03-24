@@ -8,6 +8,7 @@ import SpotlightCard from '../components/ReactBits/SpotlightCard';
 import ShinyText from '../components/ReactBits/ShinyText';
 import BlurText from '../components/ReactBits/BlurText';
 import VariableProximity from '../components/ReactBits/VariableProximity';
+import { cn } from '../utils/cn';
 
 const API_URL = 'https://aura-app-keg8.onrender.com/api';
 
