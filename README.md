@@ -1,4 +1,4 @@
-# Aura — Real-Time Chat Application([App]{https://aura-app-in-chat.vercel.app/})
+# Aura — Real-Time Chat Application([App](https://aura-app-in-chat.vercel.app/))
 
 <div align="center">
 
