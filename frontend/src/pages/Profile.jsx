@@ -8,8 +8,7 @@ import TiltedCard from '../components/ReactBits/TiltedCard';
 import BlurText from '../components/ReactBits/BlurText';
 import ShinyText from '../components/ReactBits/ShinyText';
 import { cn } from '../utils/cn';
-
-const API_URL = 'https://aura-app-keg8.onrender.com/api';
+import { API_URL } from '../config';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -56,7 +55,6 @@ const Profile = () => {
         animate={{ opacity: 1, y: 0 }}
         className="glass-panel p-8 md:p-12 w-full max-w-lg flex flex-col gap-8 relative overflow-hidden"
       >
-        {/* Background Glow */}
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-600/20 blur-3xl rounded-full" />
         <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-violet-600/20 blur-3xl rounded-full" />
 
@@ -75,7 +73,6 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Avatar Section */}
         <div className="flex flex-col items-center gap-6 relative z-10">
           <div className="w-40 h-40 group relative">
             {avatarSrc ? (
@@ -127,7 +124,6 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Form Fields */}
         <div className="flex flex-col gap-6 relative z-10">
           <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
             <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 block ml-1">Current Status</label>

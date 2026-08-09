@@ -6,7 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import SpotlightCard from '../components/ReactBits/SpotlightCard';
 import { cn } from '../utils/cn';
 
-const API_URL = 'https://aura-app-keg8.onrender.com/api';
+import { API_URL } from '../config';
 
 const Rooms = () => {
   const location = useLocation();
@@ -112,7 +112,7 @@ const Rooms = () => {
 
   return (
     <div className="flex flex-col flex-1 min-w-0 bg-transparent overflow-hidden">
-      {/* Sticky Header */}
+      
       <header className="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-slate-900/40 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-4">
           <h2 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
@@ -141,7 +141,7 @@ const Rooms = () => {
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10">
         <div className="w-full space-y-8">
-          {/* Internal Search Bar */}
+          
           <div className="relative group max-w-lg">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
             <input 
@@ -165,7 +165,7 @@ const Rooms = () => {
             )}
           </AnimatePresence>
 
-          {/* Room Grid */}
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
             Array(6).fill(0).map((_, i) => (
@@ -284,7 +284,7 @@ const RoomCard = ({ room, userId, onClick, onDelete, isMember, partnerName }) =>
               {partnerName ? initial.toUpperCase() : <Hash size={32} />}
             </div>
             <div className="min-w-0">
-              <h3 className="font-bold text-xl truncate pr-2 tracking-tight">{partnerName || room.name}</h3>
+              <h3 className="font-bold text-xl truncate pr-2 tracking-tight text-white">{partnerName || room.name}</h3>
               <p className="text-xs font-black uppercase tracking-widest text-slate-500 mt-1">
                 {partnerName ? 'Direct Message' : `${room.members?.length || 0} members`}
               </p>
@@ -315,8 +315,10 @@ const RoomCard = ({ room, userId, onClick, onDelete, isMember, partnerName }) =>
           </div>
           
           <div className={cn(
-            "text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest transition-all",
-            isMember ? "bg-emerald-400/10 text-emerald-400" : "bg-indigo-600 text-white group-hover:shadow-lg group-hover:shadow-indigo-500/30"
+            "text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest transition-all shadow-lg",
+            isMember 
+              ? "bg-gradient-to-r from-brand-600 to-indigo-600 text-white shadow-brand-500/20 group-hover:shadow-brand-500/40 group-hover:scale-105" 
+              : "bg-emerald-500 text-white shadow-emerald-500/20 group-hover:bg-emerald-400 group-hover:scale-105"
           )}>
             {isMember ? 'Open Chat' : 'Join Room'}
           </div>

@@ -1,214 +1,91 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
-:root {
-  /* Dynamic Dark Theme Colors */
-  --bg-main: #0f172a;   /* Slate 900 */
-  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-  --surface-color: rgba(30, 41, 59, 0.6);
-  --surface-border: rgba(255, 255, 255, 0.08);
-  --primary-glow: rgba(99, 102, 241, 0.5);
-  
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --primary-accent: #6366f1; /* Indigo */
-  --secondary-accent: #8b5cf6; /* Violet */
-  
-  --danger: #ef4444;
-  --success: #10b981;
-  
-  /* Glassmorphism */
-  --glass-bg: rgba(15, 23, 42, 0.5);
-  --glass-backdrop: blur(16px);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  
-  /* Animations */
-  --transition-fast: 0.15s ease-in-out;
-  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-  /* Layout Widths */
-  --sidebar-primary-width: 72px;
-  --sidebar-secondary-width: 260px;
-  --member-panel-width: 240px;
+@theme {
+  --font-sans: "Outfit", sans-serif;
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-300: #a5b4fc;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+  --color-brand-900: #312e81;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: 'Inter', sans-serif;
-  background: var(--bg-gradient);
-  color: var(--text-primary);
-  min-height: 100vh;
-  margin: 0;
-  overflow: hidden; /* Prevent scroll on main app */
-  -webkit-font-smoothing: antialiased;
-  font-size: 16px; /* Base chat font size */
-  line-height: 1.5;
-}
-
-/* Glass panel utility */
-.glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-backdrop);
-  -webkit-backdrop-filter: var(--glass-backdrop);
-  border: var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  border-radius: 20px;
-}
-
-/* Base button */
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
-  color: #fff;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: var(--transition-normal);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  box-shadow: 0 4px 14px 0 var(--primary-glow);
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px 0 var(--primary-glow);
-  filter: brightness(1.1);
-}
-
-.btn-primary:active {
-  transform: translateY(0);
-}
-
-/* Base input */
-.input-base {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--surface-border);
-  color: var(--text-primary);
-  padding: 12px 16px;
-  border-radius: 12px;
-  font-size: 1rem;
-  transition: var(--transition-fast);
-  outline: none;
-  width: 100%;
-}
-
-.input-base:focus {
-  border-color: var(--primary-accent);
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-}
-
-.input-base::placeholder {
-  color: var(--text-secondary);
-}
-
-/* Layout utilities */
-.app-shell {
-  display: flex;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-  background: #020617; /* Deepest Navy/Black */
-  position: relative;
-}
-
-.sidebar-primary {
-  width: var(--sidebar-primary-width);
-  height: 100%;
-  background: rgba(15, 23, 42, 0.98);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 16px 0;
-  flex-shrink: 0;
-  z-index: 50;
-  transition: width 0.3s ease;
-}
-
-.sidebar-secondary {
-  width: var(--sidebar-secondary-width);
-  height: 100%;
-  background: rgba(15, 23, 42, 0.4);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  backdrop-filter: blur(20px);
-  z-index: 40;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.main-content {
-  flex: 1;
-  height: 100%;
-  min-width: 0; /* Prevents flex child from exceeding container */
-  display: flex;
-  flex-direction: column;
-  background: transparent;
-  position: relative;
-  z-index: 10;
-}
-
-.member-panel {
-  width: var(--member-panel-width);
-  height: 100%;
-  background: rgba(15, 23, 42, 0.4);
-  border-left: 1px solid rgba(255, 255, 255, 0.05);
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  z-index: 20;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-right 0.3s ease;
-}
-
-/* Responsiveness & Overlays */
-@media (max-width: 1024px) {
-  .member-panel {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    transform: translateX(100%);
-    width: 280px;
-    background: rgba(15, 23, 42, 0.98);
-    backdrop-filter: blur(20px);
-    z-index: 100;
+@layer base {
+  * {
+    @apply border-white/10;
   }
-  .member-panel.open {
-    transform: translateX(0);
-    box-shadow: -10px 0 50px rgba(0,0,0,0.8);
+  body {
+    @apply font-sans antialiased bg-slate-950 text-slate-100 overflow-hidden;
+    background: radial-gradient(circle at top right, theme(colors.slate.900), theme(colors.slate.950));
   }
 }
 
-@media (max-width: 768px) {
+@layer components {
+  .glass-panel {
+    @apply bg-slate-900/40 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl;
+  }
+  
+  .input-base {
+    @apply w-full bg-slate-900/50 border border-slate-700/50 text-slate-100 px-4 py-3 rounded-xl 
+           transition-all duration-300 outline-none
+           focus:border-brand-500 focus:bg-slate-800/50 focus:ring-4 focus:ring-brand-500/20
+           placeholder:text-slate-500;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold
+           bg-gradient-to-r from-brand-600 to-indigo-500 text-white
+           hover:from-brand-500 hover:to-indigo-400
+           active:scale-95 transition-all duration-300
+           shadow-[0_4px_20px_-4px_rgba(99,102,241,0.5)]
+           hover:shadow-[0_8px_25px_-4px_rgba(99,102,241,0.6)];
+  }
+
+  /* Restored Layout Utilities */
+  .app-shell {
+    @apply flex h-screen w-screen overflow-hidden relative bg-slate-950;
+  }
+  
+  .sidebar-primary {
+    @apply w-[72px] h-full bg-slate-900/95 border-r border-white/5 flex flex-col items-center py-4 shrink-0 z-50 transition-all duration-300;
+  }
+  
   .sidebar-secondary {
-    position: absolute;
-    left: var(--sidebar-primary-width);
-    top: 0;
-    bottom: 0;
-    transform: translateX(-150%);
-    z-index: 100;
-    width: calc(100vw - var(--sidebar-primary-width));
-  }
-  .sidebar-secondary.open {
-    transform: translateX(0);
-    box-shadow: 10px 0 50px rgba(0,0,0,0.8);
+    @apply w-[260px] h-full bg-slate-900/40 border-r border-white/5 flex flex-col shrink-0 backdrop-blur-xl z-40 transition-transform duration-300;
   }
   
+  .main-content {
+    @apply flex-1 h-full min-w-0 flex flex-col bg-transparent relative z-10;
+  }
+  
+  .member-panel {
+    @apply w-[240px] h-full bg-slate-900/40 border-l border-white/5 flex flex-col shrink-0 z-20 backdrop-blur-xl transition-all duration-300;
+  }
+
+  @media (max-width: 1024px) {
+    .member-panel {
+      @apply absolute right-0 top-0 bottom-0 translate-x-full w-[280px] bg-slate-900/95 backdrop-blur-xl z-[100];
+    }
+    .member-panel.open {
+      @apply translate-x-0 shadow-[-10px_0_50px_rgba(0,0,0,0.8)];
+    }
+  }
+
+  @media (max-width: 768px) {
+    .sidebar-secondary {
+      @apply absolute left-[72px] top-0 bottom-0 -translate-x-[150%] z-[100] w-[calc(100vw-72px)] bg-slate-900/95;
+    }
+    .sidebar-secondary.open {
+      @apply translate-x-0 shadow-[10px_0_50px_rgba(0,0,0,0.8)];
+    }
+  }
 }
 
-/* Custom Glassy Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
@@ -218,16 +95,13 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  @apply bg-white/10 rounded-full border border-white/5;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.3);
+  @apply bg-brand-500/50;
 }
 
-/* For Firefox */
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.1) transparent;

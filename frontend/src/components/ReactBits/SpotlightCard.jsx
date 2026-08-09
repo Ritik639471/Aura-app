@@ -5,6 +5,7 @@ const SpotlightCard = ({
   children,
   className = "",
   spotlightColor = "rgba(255, 255, 255, 0.2)",
+  onClick,
 }) => {
   const divRef = useRef(null);
   const [isFocused, setIsFocused] = useState(false);
@@ -46,6 +47,7 @@ const SpotlightCard = ({
       onMouseLeave={handleMouseLeave}
       onFocus={handleFocus}
       onBlur={handleBlur}
+      onClick={onClick}
       className={cn(
         "relative flex size-full overflow-hidden rounded-3xl border border-white/10 bg-black/20 p-8",
         className

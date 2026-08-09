@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ShinyText from './ReactBits/ShinyText';
 import { cn } from '../utils/cn';
 
-const API_URL = 'https://aura-app-keg8.onrender.com/api';
+import { API_URL } from '../config';
 
 const Header = () => {
   const navigate = useNavigate();

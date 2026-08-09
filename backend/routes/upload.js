@@ -41,7 +41,7 @@ router.post('/', requireAuth, (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
-      const { room } = req.body;
+      const { room, replyTo, replyMessage } = req.body;
       if (!room) return res.status(400).json({ error: 'Room is required' });
 
       const imageUrl = req.file.path;
@@ -53,7 +53,9 @@ router.post('/', requireAuth, (req, res) => {
         imageUrl,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         readBy: [req.user.username],
-        reactions: []
+        reactions: [],
+        replyTo: replyTo || null,
+        replyMessage: replyMessage ? JSON.parse(replyMessage) : null
       });
       await newMessage.save();
 

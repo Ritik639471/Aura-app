@@ -3,7 +3,7 @@ import { X, Hash, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const API_URL = 'https://aura-app-keg8.onrender.com/api';
+import { API_URL } from '../config';
 
 const GroupInfoModal = ({ room, roomMembers, roomUsers, username, userId, token, isDM, dmPartner, onClose, onMakeAdmin }) => {
   const isCreator = roomMembers.find(m => (m._id === userId) && m._isCreator);

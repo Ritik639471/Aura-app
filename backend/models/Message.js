@@ -29,7 +29,13 @@ const MessageSchema = new mongoose.Schema({
   readBy: [{ type: String }],
   edited: { type: Boolean, default: false },
   pinned: { type: Boolean, default: false },
-  deletedAt: { type: Date, default: null }
+  deletedAt: { type: Date, default: null },
+  replyTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Message', default: null },
+  replyMessage: {
+    author: String,
+    message: String,
+    image: String
+  }
 }, { timestamps: true });
 
 export default mongoose.model('Message', MessageSchema);

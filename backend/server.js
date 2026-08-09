@@ -91,7 +91,9 @@ io.on('connection', (socket) => {
         room: data.room,
         author: data.author,
         message: data.message,
-        time: data.time
+        time: data.time,
+        replyTo: data.replyTo,
+        replyMessage: data.replyMessage
       });
       await newMessage.save();
 

@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
 import TiltedCard from './ReactBits/TiltedCard';
 
-const API_URL = 'https://aura-app-keg8.onrender.com/api';
+import { API_URL } from '../config';
 
 const SidebarSecondary = ({ isOpen }) => {
   const navigate = useNavigate();
@@ -58,7 +58,7 @@ const SidebarSecondary = ({ isOpen }) => {
         {/* Joined Channels */}
         <section>
           <div className="flex items-center justify-between px-2 mb-3 group">
-            <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Channels</h3>
+            <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Channels</h3>
             <button 
               onClick={() => navigate('/rooms', { state: { openCreateModal: true } })}
               className="text-slate-500 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
@@ -88,7 +88,7 @@ const SidebarSecondary = ({ isOpen }) => {
         {/* Direct Messages */}
         <section>
           <div className="flex items-center justify-between px-2 mb-3">
-            <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Direct Messages</h3>
+            <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">Direct Messages</h3>
           </div>
           <div className="space-y-0.5">
             {myDMs.map(dm => {

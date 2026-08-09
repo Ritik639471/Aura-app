@@ -2,21 +2,18 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare, UserPlus, LogIn, KeyRound } from 'lucide-react';
 import axios from 'axios';
-
-const API_URL = 'https://aura-app-keg8.onrender.com/api';
+import { API_URL } from '../config';
 
 const Login = () => {
-  const [view, setView] = useState('login'); // 'login', 'register', 'forgot'
+  const [view, setView] = useState('login');
   
-  // Form States
-  const [identifier, setIdentifier] = useState(''); // Used for login (email or username)
+  const [identifier, setIdentifier] = useState('');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   
-  // UI States
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +42,7 @@ const Login = () => {
       await axios.post(`${API_URL}/auth/register`, { email, username, password });
       setView('login');
       setSuccess('Account created successfully! Please log in.');
-      setIdentifier(username); // Pre-fill
+      setIdentifier(username);
       setPassword('');
     } catch (err) {
       setError(err.response?.data?.error || 'Registration failed');
@@ -93,24 +90,22 @@ const Login = () => {
   };
 
   return (
-    <div className="login-wrapper" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div className="glass-panel" style={{ padding: '40px', width: '100%', maxWidth: '420px', textAlign: 'center' }}>
+    <div className="w-full h-screen flex items-center justify-center p-6 relative overflow-hidden">
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-600/30 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none" />
+      
+      <div className="glass-panel p-10 w-full max-w-md text-center relative z-10">
         
-        <div style={{ marginBottom: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-          <div style={{ 
-            width: '64px', height: '64px', borderRadius: '16px', 
-            background: 'linear-gradient(135deg, var(--primary-accent), var(--secondary-accent))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 8px 32px var(--primary-glow)'
-          }}>
-            <MessageSquare color="white" size={32} />
+        <div className="mb-8 flex flex-col items-center gap-4">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-indigo-600 flex items-center justify-center shadow-[0_8px_32px_rgba(99,102,241,0.5)]">
+            <MessageSquare className="text-white" size={32} />
           </div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: '700' }}>
+          <h1 className="text-3xl font-bold tracking-tight text-white">
             {view === 'login' && 'Welcome Back'}
             {view === 'register' && 'Create Account'}
             {view === 'forgot' && 'Reset Password'}
           </h1>
-          <p style={{ color: 'var(--text-secondary)' }}>
+          <p className="text-slate-400 text-sm font-medium">
             {view === 'login' && 'Sign in to continue to Aura'}
             {view === 'register' && 'Get started with Aura'}
             {view === 'forgot' && 'Enter your email to reset your password'}
@@ -118,89 +113,89 @@ const Login = () => {
         </div>
 
         {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', padding: '10px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.875rem' }}>
+          <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl mb-6 text-sm font-medium">
             {error}
           </div>
         )}
         
         {success && (
-          <div style={{ background: 'rgba(34, 197, 94, 0.1)', color: 'var(--success)', padding: '10px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.875rem' }}>
+          <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-3 rounded-xl mb-6 text-sm font-medium">
             {success}
           </div>
         )}
 
         {view === 'login' && (
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left' }}>
-              <label style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--text-secondary)' }}>Email or Username</label>
+          <form onSubmit={handleLogin} className="flex flex-col gap-5 text-left">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-slate-300">Email or Username</label>
               <input className="input-base" type="text" placeholder="e.g. johndoe or user@email.com" value={identifier} onChange={(e) => setIdentifier(e.target.value)} required />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <label style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--text-secondary)' }}>Password</label>
-                <span onClick={() => switchView('forgot')} style={{ fontSize: '0.75rem', color: 'var(--primary-accent)', cursor: 'pointer' }}>Forgot?</span>
+            <div className="flex flex-col gap-2">
+              <div className="flex justify-between items-center">
+                <label className="text-sm font-semibold text-slate-300">Password</label>
+                <span onClick={() => switchView('forgot')} className="text-xs text-brand-400 hover:text-brand-300 cursor-pointer font-medium transition-colors">Forgot?</span>
               </div>
               <input className="input-base" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
-            <button type="submit" disabled={isLoading} className="btn-primary" style={{ marginTop: '10px' }}>
-              {isLoading ? 'Loading...' : <><LogIn size={18} /> Sign In</>}
+            <button type="submit" disabled={isLoading} className="btn-primary mt-2">
+              {isLoading ? 'Loading...' : <><LogIn size={20} /> Sign In</>}
             </button>
-            <p style={{ marginTop: '16px', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-              Don't have an account? <span onClick={() => switchView('register')} style={{ color: 'var(--primary-accent)', cursor: 'pointer', fontWeight: '600' }}>Sign up</span>
+            <p className="mt-4 text-center text-sm font-medium text-slate-400">
+              Don't have an account? <span onClick={() => switchView('register')} className="text-brand-400 hover:text-brand-300 cursor-pointer font-semibold transition-colors">Sign up</span>
             </p>
           </form>
         )}
 
         {view === 'register' && (
-          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left' }}>
-              <label style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--text-secondary)' }}>Email</label>
+          <form onSubmit={handleRegister} className="flex flex-col gap-5 text-left">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-slate-300">Email</label>
               <input className="input-base" type="email" placeholder="hello@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left' }}>
-              <label style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--text-secondary)' }}>Username</label>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-slate-300">Username</label>
               <input className="input-base" type="text" placeholder="e.g. johndoe" value={username} onChange={(e) => setUsername(e.target.value)} required minLength={3} />
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left' }}>
-              <label style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--text-secondary)' }}>Password</label>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-slate-300">Password</label>
               <input className="input-base" type="password" placeholder="Min 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
             </div>
-            <button type="submit" disabled={isLoading} className="btn-primary" style={{ marginTop: '10px' }}>
-              {isLoading ? 'Creating...' : <><UserPlus size={18} /> Sign Up</>}
+            <button type="submit" disabled={isLoading} className="btn-primary mt-2">
+              {isLoading ? 'Creating...' : <><UserPlus size={20} /> Sign Up</>}
             </button>
-            <p style={{ marginTop: '16px', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-              Already have an account? <span onClick={() => switchView('login')} style={{ color: 'var(--primary-accent)', cursor: 'pointer', fontWeight: '600' }}>Log in</span>
+            <p className="mt-4 text-center text-sm font-medium text-slate-400">
+              Already have an account? <span onClick={() => switchView('login')} className="text-brand-400 hover:text-brand-300 cursor-pointer font-semibold transition-colors">Log in</span>
             </p>
           </form>
         )}
 
         {view === 'forgot' && (
-          <form onSubmit={otpSent ? handleResetPassword : handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left' }}>
-              <label style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--text-secondary)' }}>Account Email</label>
+          <form onSubmit={otpSent ? handleResetPassword : handleSendOtp} className="flex flex-col gap-5 text-left">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-slate-300">Account Email</label>
               <input className="input-base" type="email" placeholder="Enter your registered email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={otpSent} />
             </div>
             
             {otpSent && (
               <>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left' }}>
-                  <label style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--text-secondary)' }}>6-Digit OTP</label>
-                  <input className="input-base" type="text" placeholder="Check your console for the OTP" value={otp} onChange={(e) => setOtp(e.target.value)} required maxLength={6} style={{ letterSpacing: '4px', textAlign: 'center', fontSize: '1.25rem' }} />
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-slate-300">6-Digit OTP</label>
+                  <input className="input-base tracking-[0.5em] text-center text-lg font-bold" type="text" placeholder="XXXXXX" value={otp} onChange={(e) => setOtp(e.target.value)} required maxLength={6} />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left' }}>
-                  <label style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--text-secondary)' }}>New Password</label>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-semibold text-slate-300">New Password</label>
                   <input className="input-base" type="password" placeholder="Min 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
                 </div>
               </>
             )}
 
-            <button type="submit" disabled={isLoading} className="btn-primary" style={{ marginTop: '10px' }}>
+            <button type="submit" disabled={isLoading} className="btn-primary mt-2">
               {isLoading ? 'Processing...' : (
-                otpSent ? <><KeyRound size={18} /> Resets Password</> : <><MessageSquare size={18} /> Send OTP</>
+                otpSent ? <><KeyRound size={20} /> Reset Password</> : <><MessageSquare size={20} /> Send OTP</>
               )}
             </button>
-            <p style={{ marginTop: '16px', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-              Remember your password? <span onClick={() => switchView('login')} style={{ color: 'var(--primary-accent)', cursor: 'pointer', fontWeight: '600' }}>Back to login</span>
+            <p className="mt-4 text-center text-sm font-medium text-slate-400">
+              Remember your password? <span onClick={() => switchView('login')} className="text-brand-400 hover:text-brand-300 cursor-pointer font-semibold transition-colors">Back to login</span>
             </p>
           </form>
         )}
