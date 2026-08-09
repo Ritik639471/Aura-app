@@ -49,6 +49,7 @@ router.post('/', requireAuth, (req, res) => {
       const newMessage = new Message({
         room,
         author: req.user.username,
+        authorAvatar: req.user.avatar || null,
         message: '',
         imageUrl,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),

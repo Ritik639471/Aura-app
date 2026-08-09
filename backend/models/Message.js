@@ -10,6 +10,10 @@ const MessageSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  authorAvatar: {
+    type: String,
+    default: null
+  },
   message: {
     type: String,
     default: ''

@@ -86,6 +86,7 @@ io.on('connection', (socket) => {
       const newMessage = new Message({
         room: data.room,
         author: data.author,
+        authorAvatar: data.authorAvatar || null,
         message: data.message,
         time: data.time,
         replyTo: data.replyTo,

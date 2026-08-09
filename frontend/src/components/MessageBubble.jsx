@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Check, CheckCheck, Copy, Check as CheckIcon, Reply as ReplyIcon } from 'lucide-react';
+import { Check, CheckCheck, Copy, Check as CheckIcon, Reply as ReplyIcon, MoreHorizontal, Trash2, Edit3, Pin, Download, X } from 'lucide-react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
 import { API_URL } from '../config';
 
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
+
+// Helper to downsample Cloudinary images for lightweight thumbnails
+const getOptimizedImage = (url, width = 400) => {
+  if (!url) return null;
+  if (url.includes('res.cloudinary.com') && url.includes('/upload/')) {
+    return url.replace('/upload/', `/upload/c_scale,w_${width},q_auto,f_auto/`);
+  }
+  return url;
+};
 
 const extractUrl = (text) => {
   const match = text?.match(/https?:\/\/[^\s]+/);
@@ -33,7 +42,7 @@ const LinkPreview = ({ url }) => {
     >
       <div className="border border-white/10 rounded-xl overflow-hidden bg-slate-900/40 hover:bg-slate-900/60 transition-colors">
         {preview.image && (
-          <img src={preview.image} alt="" className="w-full h-32 object-cover group-hover/link:scale-105 transition-transform duration-500" />
+          <img src={getOptimizedImage(preview.image, 400)} alt="" className="w-full h-32 object-cover group-hover/link:scale-105 transition-transform duration-500" />
         )}
         <div className="p-3">
           <p className="text-[10px] text-brand-400 font-bold uppercase tracking-wider mb-1 opacity-70">{preview.domain}</p>
@@ -47,14 +56,34 @@ const LinkPreview = ({ url }) => {
   );
 };
 
-const MessageBubble = ({ msg, username, isHighlighted, onReact, onEdit, onDelete, onPin, onReply, isPowerUser, searchQuery, roomUsers }) => {
-  const [showActions, setShowActions] = useState(false);
+const MessageBubble = ({ 
+  msg, 
+  username, 
+  isHighlighted, 
+  onReact, 
+  onEdit, 
+  onDelete, 
+  onPin, 
+  onReply, 
+  onImageClick, 
+  isPowerUser, 
+  searchQuery, 
+  roomUsers, 
+  roomMembers 
+}) => {
+  const [showOptionsTrigger, setShowOptionsTrigger] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(msg.message);
   const [copied, setCopied] = useState(false);
+  
   const isMe = msg.author === username;
   const isDeleted = !!msg.deletedAt;
   const linkUrl = !isDeleted && !msg.imageUrl ? extractUrl(msg.message) : null;
+
+  // Find author avatar from roomMembers if not directly on msg
+  const memberObj = roomMembers?.find(m => m.username === msg.author);
+  const authorAvatar = msg.authorAvatar || memberObj?.avatar;
 
   const highlightText = (text) => {
     if (!searchQuery || !text) return text;
@@ -70,6 +99,7 @@ const MessageBubble = ({ msg, username, isHighlighted, onReact, onEdit, onDelete
     navigator.clipboard.writeText(msg.message || '');
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+    setIsMenuOpen(false);
   };
 
   const renderReadReceipt = () => {
@@ -87,27 +117,40 @@ const MessageBubble = ({ msg, username, isHighlighted, onReact, onEdit, onDelete
 
   const handleEditSubmit = (e) => {
     e.preventDefault();
-    if (editText.trim()) { onEdit(msg._id, editText, msg.room); setEditing(false); }
+    if (editText.trim()) { 
+      onEdit(msg._id, editText, msg.room); 
+      setEditing(false); 
+      setIsMenuOpen(false);
+    }
   };
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+      initial={{ opacity: 0, y: 10, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      className={cn("flex items-end gap-3 mb-6 group transition-all", isMe && "flex-row-reverse")}
-      onMouseEnter={() => setShowActions(true)} 
-      onMouseLeave={() => setShowActions(false)}
+      className={cn("flex items-end gap-3 mb-5 group relative transition-all", isMe && "flex-row-reverse")}
+      onMouseEnter={() => setShowOptionsTrigger(true)} 
+      onMouseLeave={() => { setShowOptionsTrigger(false); setIsMenuOpen(false); }}
     >
+      {/* Avatar Display */}
       <div className="shrink-0 mb-1">
         <div className={cn(
-          "w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shadow-lg",
-          isMe ? "bg-gradient-to-br from-brand-500 to-indigo-600 text-white shadow-brand-500/20" : "bg-slate-800 text-slate-300 border border-white/10"
+          "w-9 h-9 rounded-xl flex items-center justify-center font-black text-xs shadow-lg overflow-hidden border border-white/10",
+          isMe ? "bg-gradient-to-br from-brand-500 to-indigo-600 text-white" : "bg-slate-800 text-slate-300"
         )}>
-          {msg.author[0].toUpperCase()}
+          {authorAvatar ? (
+            <img 
+              src={getOptimizedImage(authorAvatar, 100)} 
+              alt={msg.author} 
+              className="w-full h-full object-cover" 
+            />
+          ) : (
+            msg.author[0].toUpperCase()
+          )}
         </div>
       </div>
 
-      <div className={cn("max-w-[85%] md:max-w-[75%] relative flex flex-col", isMe ? "items-end" : "items-start")}>
+      <div className={cn("max-w-[85%] md:max-w-[70%] relative flex flex-col", isMe ? "items-end" : "items-start")}>
         {!isDeleted && (
           <div className={cn("flex items-baseline gap-2 mb-1.5", isMe ? "mr-1 flex-row-reverse" : "ml-1")}>
             <span className={cn(
@@ -123,50 +166,98 @@ const MessageBubble = ({ msg, username, isHighlighted, onReact, onEdit, onDelete
           </div>
         )}
 
+        {/* Clean Menu Trigger Button on Hover (Stops automatic clutter popups) */}
         <AnimatePresence>
-          {showActions && !isDeleted && (
+          {showOptionsTrigger && !isDeleted && (
             <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 5 }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
               className={cn(
-                "absolute -top-12 flex gap-1 bg-slate-900/90 backdrop-blur-xl border border-white/10 p-1 rounded-xl shadow-2xl z-20",
-                isMe ? "right-0" : "left-0"
+                "absolute top-1/2 -translate-y-1/2 z-20 flex items-center gap-1",
+                isMe ? "-left-10" : "-right-10"
               )}
             >
               <button 
-                onClick={() => onReply(msg)}
-                className="p-1.5 text-slate-400 hover:text-white hover:bg-brand-500/20 rounded-lg transition-colors" 
-                title="Reply"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="p-1.5 rounded-xl bg-slate-900/90 border border-white/10 text-slate-400 hover:text-white hover:bg-slate-800 transition-all shadow-xl"
+                title="Options"
               >
-                <ReplyIcon size={14} />
+                <MoreHorizontal size={16} />
               </button>
-              <button 
-                onClick={handleCopy} 
-                className={cn("p-1.5 rounded-lg transition-colors", copied ? "text-emerald-400 bg-emerald-400/10" : "text-slate-400 hover:text-white hover:bg-white/10")} 
-                title="Copy"
-              >
-                {copied ? <CheckIcon size={14} /> : <Copy size={14} />}
-              </button>
-              {isMe && (
-                <button onClick={() => setEditing(true)} className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors" title="Edit">
-                  ✏️
-                </button>
-              )}
-              {(isMe || isPowerUser) && (
-                <button onClick={() => onDelete(msg._id, msg.room)} className="p-1.5 text-slate-400 hover:text-white hover:bg-red-500/20 rounded-lg transition-colors" title="Delete">
-                  🗑️
-                </button>
-              )}
-              {isPowerUser && (
-                <button onClick={() => onPin(msg._id, msg.room)} className={cn("p-1.5 rounded-lg transition-colors", msg.pinned ? "text-yellow-400 bg-yellow-400/10" : "text-slate-400 hover:text-white hover:bg-white/10")} title={msg.pinned ? 'Unpin' : 'Pin'}>
-                  📌
-                </button>
-              )}
             </motion.div>
           )}
         </AnimatePresence>
 
+        {/* Options Dropdown Menu (Opened only when user clicks More Options) */}
+        <AnimatePresence>
+          {isMenuOpen && !isDeleted && (
+            <motion.div 
+              initial={{ opacity: 0, y: -5, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -5, scale: 0.95 }}
+              className={cn(
+                "absolute -top-14 bg-slate-900/95 backdrop-blur-2xl border border-white/15 p-2 rounded-2xl shadow-2xl z-30 flex flex-col gap-2 min-w-[200px]",
+                isMe ? "right-0" : "left-0"
+              )}
+            >
+              {/* Quick Reactions */}
+              <div className="flex justify-between items-center bg-white/5 p-1 rounded-xl">
+                {REACTION_EMOJIS.map(emoji => (
+                  <button 
+                    key={emoji} 
+                    onClick={() => { onReact(msg._id, emoji); setIsMenuOpen(false); }} 
+                    className="p-1 hover:bg-white/10 rounded-lg text-base hover:scale-125 transition-transform"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+
+              {/* Action List */}
+              <div className="flex flex-col gap-0.5 text-xs font-semibold text-slate-300">
+                <button 
+                  onClick={() => { onReply(msg); setIsMenuOpen(false); }}
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <ReplyIcon size={14} className="text-brand-400" /> Reply
+                </button>
+                <button 
+                  onClick={handleCopy}
+                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-white/10 hover:text-white transition-colors"
+                >
+                  <Copy size={14} className="text-slate-400" /> {copied ? 'Copied!' : 'Copy Text'}
+                </button>
+                {isMe && (
+                  <button 
+                    onClick={() => { setEditing(true); setIsMenuOpen(false); }}
+                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-white/10 hover:text-white transition-colors"
+                  >
+                    <Edit3 size={14} className="text-amber-400" /> Edit Message
+                  </button>
+                )}
+                {isPowerUser && (
+                  <button 
+                    onClick={() => { onPin(msg._id, msg.room); setIsMenuOpen(false); }}
+                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-white/10 hover:text-white transition-colors"
+                  >
+                    <Pin size={14} className="text-yellow-400" /> {msg.pinned ? 'Unpin Message' : 'Pin Message'}
+                  </button>
+                )}
+                {(isMe || isPowerUser) && (
+                  <button 
+                    onClick={() => { onDelete(msg._id, msg.room); setIsMenuOpen(false); }}
+                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-red-500/20 hover:text-red-400 transition-colors"
+                  >
+                    <Trash2 size={14} className="text-red-400" /> Delete Message
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Message Bubble Container */}
         <div className={cn(
           "relative px-4 py-3 rounded-2xl transition-all duration-300 shadow-lg text-sm",
           isDeleted ? "bg-white/5 border border-white/5 italic text-slate-500" :
@@ -201,17 +292,24 @@ const MessageBubble = ({ msg, username, isHighlighted, onReact, onEdit, onDelete
                   </p>
                 </div>
               )}
+
+              {/* Low-Quality Thumbnail Image with In-App Lightbox trigger */}
               {msg.imageUrl && (
-                <motion.a 
-                  href={msg.imageUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  whileHover={{ scale: 1.02 }}
-                  className="block mb-2 overflow-hidden rounded-xl shadow-inner border border-white/10"
+                <div 
+                  onClick={() => onImageClick && onImageClick(msg.imageUrl)}
+                  className="block mb-2 overflow-hidden rounded-2xl shadow-lg border border-white/10 cursor-pointer group/img relative"
                 >
-                  <img src={msg.imageUrl} alt="attachment" className="max-w-full max-h-72 object-contain rounded-xl" />
-                </motion.a>
+                  <img 
+                    src={getOptimizedImage(msg.imageUrl, 400)} 
+                    alt="attachment" 
+                    className="max-w-[260px] max-h-[200px] w-full object-cover rounded-2xl group-hover/img:scale-105 transition-transform duration-300" 
+                  />
+                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity text-white text-xs font-bold gap-1">
+                    🔍 Expand Image
+                  </div>
+                </div>
               )}
+
               {msg.message && (
                 <div className={cn(
                   "leading-relaxed break-words font-medium",
@@ -231,6 +329,7 @@ const MessageBubble = ({ msg, username, isHighlighted, onReact, onEdit, onDelete
           )}
         </div>
 
+        {/* Message Reactions List */}
         {!isDeleted && msg.reactions?.length > 0 && (
           <div className={cn(
             "flex flex-wrap gap-1 mt-2",
@@ -255,31 +354,6 @@ const MessageBubble = ({ msg, username, isHighlighted, onReact, onEdit, onDelete
             ))}
           </div>
         )}
-
-        <AnimatePresence>
-          {showActions && !isDeleted && msg._id && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10, scale: 0.8 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 5, scale: 0.9 }}
-              className={cn(
-                "absolute bg-slate-900/95 border border-white/10 rounded-2xl p-1.5 flex gap-1 shadow-2xl z-30",
-                isMe ? "right-0" : "left-0",
-                msg.reactions?.length > 0 ? "top-[calc(100%+8px)]" : "top-[calc(100%+4px)]"
-              )}
-            >
-              {REACTION_EMOJIS.map(emoji => (
-                <button 
-                  key={emoji} 
-                  onClick={() => onReact(msg._id, emoji)} 
-                  className="p-1.5 rounded-xl text-xl hover:bg-white/10 hover:scale-125 transition-all"
-                >
-                  {emoji}
-                </button>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </motion.div>
   );

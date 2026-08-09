@@ -24,8 +24,16 @@ const MemberPanel = ({ members, onlineUsers, isOpen, onClose }) => {
             {online.map((member, i) => (
               <div key={i} className="flex items-center gap-3 px-2 py-1.5 rounded-xl hover:bg-white/5 group transition-colors cursor-pointer">
                 <div className="relative">
-                  <div className="w-8 h-8 rounded-xl bg-slate-800 flex items-center justify-center border border-white/5 text-xs font-bold text-white group-hover:scale-105 transition-transform">
-                    {(member.username || member.author)?.[0]?.toUpperCase()}
+                  <div className="w-8 h-8 rounded-xl bg-slate-800 flex items-center justify-center border border-white/5 text-xs font-bold text-white group-hover:scale-105 transition-transform overflow-hidden">
+                    {member.avatar ? (
+                      <img 
+                        src={member.avatar.includes('res.cloudinary.com') ? member.avatar.replace('/upload/', '/upload/c_scale,w_100,q_auto,f_auto/') : member.avatar} 
+                        alt="" 
+                        className="w-full h-full object-cover" 
+                      />
+                    ) : (
+                      (member.username || member.author)?.[0]?.toUpperCase()
+                    )}
                   </div>
                   <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-slate-900 rounded-full" />
                 </div>
@@ -46,8 +54,16 @@ const MemberPanel = ({ members, onlineUsers, isOpen, onClose }) => {
           <div className="space-y-1 opacity-60">
             {offline.map((member, i) => (
               <div key={i} className="flex items-center gap-3 px-2 py-1.5 rounded-xl hover:bg-white/5 group transition-colors cursor-pointer grayscale-[0.5]">
-                <div className="w-8 h-8 rounded-xl bg-slate-800 flex items-center justify-center border border-white/5 text-xs font-bold text-slate-400">
-                  {(member.username || member.author)?.[0]?.toUpperCase()}
+                <div className="w-8 h-8 rounded-xl bg-slate-800 flex items-center justify-center border border-white/5 text-xs font-bold text-slate-400 overflow-hidden">
+                  {member.avatar ? (
+                    <img 
+                      src={member.avatar.includes('res.cloudinary.com') ? member.avatar.replace('/upload/', '/upload/c_scale,w_100,q_auto,f_auto/') : member.avatar} 
+                      alt="" 
+                      className="w-full h-full object-cover" 
+                    />
+                  ) : (
+                    (member.username || member.author)?.[0]?.toUpperCase()
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold truncate text-slate-400">

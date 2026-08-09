@@ -33,6 +33,7 @@ const Chat = () => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [replyToMessage, setReplyToMessage] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const [showGroupInfo, setShowGroupInfo] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -186,9 +187,13 @@ const Chat = () => {
     e.preventDefault();
     if (!currentMessage.trim() || !socket) return;
     
+    const myMember = roomMembers.find(m => m.username === username);
+    const myAvatar = myMember?.avatar || null;
+
     const msgData = { 
       room, 
       author: username, 
+      authorAvatar: myAvatar,
       message: currentMessage, 
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
       readBy: [username], 
@@ -413,9 +418,11 @@ const Chat = () => {
                 onDelete={handleDelete} 
                 onPin={handlePin} 
                 onReply={handleReply}
+                onImageClick={(imgUrl) => setSelectedImage(imgUrl)}
                 isPowerUser={isPowerUser} 
                 searchQuery={searchQuery}
                 roomUsers={roomUsers}
+                roomMembers={roomMembers}
               />
             ))}
           </AnimatePresence>
@@ -541,6 +548,44 @@ const Chat = () => {
         isOpen={isMemberPanelOpen} 
         onClose={() => setIsMemberPanelOpen(false)} 
       />
+
+      {/* In-App Image Lightbox Modal */}
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+            onClick={() => setSelectedImage(null)}
+          >
+            <div className="relative max-w-[90vw] max-h-[90vh] flex flex-col items-center" onClick={e => e.stopPropagation()}>
+              <button 
+                onClick={() => setSelectedImage(null)}
+                className="absolute -top-12 right-0 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors"
+                title="Close"
+              >
+                <X size={20} />
+              </button>
+              <img 
+                src={selectedImage} 
+                alt="Enlarged preview" 
+                className="max-w-full max-h-[85vh] object-contain rounded-2xl border border-white/10 shadow-2xl" 
+              />
+              <div className="mt-4 flex gap-3">
+                <a 
+                  href={selectedImage} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg flex items-center gap-1.5"
+                >
+                  Original File
+                </a>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

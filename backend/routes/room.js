@@ -13,7 +13,7 @@ router.get('/', requireAuth, async (req, res) => {
         { isDirectMessage: { $ne: true } },
         { isDirectMessage: true, members: req.user.id }
       ]
-    }).populate('creator', 'username').populate('members', 'username');
+    }).populate('creator', 'username avatar').populate('members', 'username avatar status');
     res.json(rooms);
   } catch (error) {
     res.status(500).json({ error: 'Server error fetching rooms' });
@@ -79,7 +79,7 @@ router.post('/:id/join', requireAuth, async (req, res) => {
     await room.save();
     
     // Return dynamically populated room
-    const updatedRoom = await Room.findById(req.params.id).populate('creator', 'username').populate('members', 'username');
+    const updatedRoom = await Room.findById(req.params.id).populate('creator', 'username avatar').populate('members', 'username avatar status');
     res.json(updatedRoom);
   } catch (error) {
     res.status(500).json({ error: 'Server error joining room' });
@@ -113,7 +113,7 @@ router.post('/dm/:username', requireAuth, async (req, res) => {
       await dmRoom.save();
     }
 
-    const populatedRoom = await Room.findById(dmRoom._id).populate('members', 'username');
+    const populatedRoom = await Room.findById(dmRoom._id).populate('members', 'username avatar status');
     res.json(populatedRoom);
   } catch (error) {
     console.error(error);
