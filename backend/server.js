@@ -51,14 +51,10 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/linkpreview', linkPreviewRoutes);
 
-// Serve Frontend Static Files in Production
-if (process.env.NODE_ENV === 'production') {
-  const distPath = path.join(__dirname, '../frontend/dist');
-  app.use(express.static(distPath));
-  app.get(/(.*)/, (req, res) => {
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
-}
+// Root route for API status
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'Aura Chat API Server is active' });
+});
 
 // Store active users per room
 const activeUsers = {};
