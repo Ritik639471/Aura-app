@@ -54,7 +54,7 @@ const SidebarSecondary = ({ isOpen }) => {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-6">
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-3 space-y-6">
         {/* Joined Channels */}
         <section>
           <div className="flex items-center justify-between px-2 mb-3 group">

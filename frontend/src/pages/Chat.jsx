@@ -121,13 +121,9 @@ const Chat = () => {
     setUnreadCount(0);
   };
 
-  useEffect(() => {
-    if (!showScrollBottom) scrollToBottom();
-  }, [messages, typingUsers]);
-
   const handleScroll = (e) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    const isAtBottom = scrollHeight - scrollTop - clientHeight < 100;
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 80;
     setShowScrollBottom(!isAtBottom);
   };
 
@@ -135,6 +131,7 @@ const Chat = () => {
     try { 
       const r = await axios.get(`${API_URL}/messages/${room}`, { headers: { Authorization: `Bearer ${token}` } }); 
       setMessages(r.data); 
+      setTimeout(() => scrollToBottom('auto'), 50);
     } catch (e) {}
   };
 
@@ -398,7 +395,7 @@ const Chat = () => {
         <div 
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto px-5 py-6 flex flex-col gap-2 custom-scrollbar scroll-smooth bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed"
+          className="flex-1 min-h-0 overflow-y-auto px-5 py-6 flex flex-col gap-2 custom-scrollbar scroll-smooth bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed"
         >
           <div className="flex-1" /> 
           

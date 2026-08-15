@@ -16,7 +16,7 @@ const MemberPanel = ({ members, onlineUsers, isOpen, onClose }) => {
         </h3>
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-6">
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-3 space-y-6">
         {/* Online Section */}
         <section>
           <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-2 px-2">Online — {online.length}</h4>
