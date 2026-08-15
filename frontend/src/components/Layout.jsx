@@ -34,7 +34,7 @@ const Layout = ({ children }) => {
           <span className="font-black tracking-tighter text-indigo-400 text-lg">AURA</span>
         </div>
 
-        <div className="flex-1 overflow-hidden relative">
+        <div className="flex-1 flex flex-col overflow-hidden relative min-h-0">
           {children}
         </div>
       </main>

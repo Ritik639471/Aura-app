@@ -111,7 +111,7 @@ const Rooms = () => {
   };
 
   return (
-    <div className="flex flex-col flex-1 min-w-0 bg-transparent overflow-hidden">
+    <div className="flex flex-col flex-1 min-h-0 min-w-0 bg-transparent overflow-hidden">
       
       <header className="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-slate-900/40 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-4">

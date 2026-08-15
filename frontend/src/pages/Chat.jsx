@@ -282,7 +282,7 @@ const Chat = () => {
     : messages;
 
   return (
-    <div className="flex flex-1 overflow-hidden bg-slate-950" onClick={() => setShowEmojiPicker(false)}>
+    <div className="flex flex-1 min-h-0 overflow-hidden bg-slate-950" onClick={() => setShowEmojiPicker(false)}>
       <AnimatePresence>
         {showGroupInfo && (
           <GroupInfoModal 
@@ -467,7 +467,7 @@ const Chat = () => {
           )}
         </AnimatePresence>
 
-        <div className="p-4 bg-slate-900/80 backdrop-blur-xl border-t border-white/10 relative z-30">
+        <div className="p-4 bg-slate-900/80 backdrop-blur-xl border-t border-white/10 relative z-30 shrink-0">
           <AnimatePresence>
             {showEmojiPicker && (
               <motion.div 
