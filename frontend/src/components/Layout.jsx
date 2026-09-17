@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Header from './Header';
 import SidebarPrimary from './SidebarPrimary';
 import SidebarSecondary from './SidebarSecondary';
 import { Menu, X } from 'lucide-react';
@@ -8,36 +9,28 @@ const Layout = ({ children }) => {
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
 
   return (
-    <div className="app-shell font-sans text-slate-200 relative">
-      <SidebarPrimary />
+    <div className="app-shell flex-col font-sans text-slate-200 relative">
+      <Header />
       
-      {/* Mobile Overlay */}
-      {isLeftSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[35] md:hidden"
-          onClick={() => setIsLeftSidebarOpen(false)}
-        />
-      )}
+      <div className="flex flex-1 w-full h-[calc(100vh-4rem)] mt-16 overflow-hidden relative">
+        <SidebarPrimary />
+        
+        {/* Mobile Overlay */}
+        {isLeftSidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[35] md:hidden"
+            onClick={() => setIsLeftSidebarOpen(false)}
+          />
+        )}
 
-      <SidebarSecondary isOpen={isLeftSidebarOpen} />
+        <SidebarSecondary isOpen={isLeftSidebarOpen} />
 
-      <main className="main-content flex flex-col min-w-0 bg-slate-950/20 relative">
-        {/* Mobile Header (Sticky) */}
-        <div className="md:hidden h-16 border-b border-white/5 flex items-center px-4 bg-slate-900/40 backdrop-blur-md z-[60] shrink-0 gap-3">
-          <button 
-            onClick={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)}
-            className="p-2.5 bg-slate-800/80 border border-white/10 rounded-xl text-slate-300 hover:text-white transition-all shadow-xl"
-            aria-label="Toggle Sidebar"
-          >
-            {isLeftSidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-          <span className="font-black tracking-tighter text-indigo-400 text-lg">AURA</span>
-        </div>
-
-        <div className="flex-1 flex flex-col overflow-hidden relative min-h-0">
-          {children}
-        </div>
-      </main>
+        <main className="main-content flex flex-col min-w-0 bg-slate-950/20 relative">
+          <div className="flex-1 flex flex-col overflow-hidden relative min-h-0">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

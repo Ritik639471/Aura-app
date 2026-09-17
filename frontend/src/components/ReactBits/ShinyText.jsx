@@ -4,22 +4,23 @@ const ShinyText = ({ text, disabled = false, speed = 5, className = "" }) => {
   const animationDuration = `${speed}s`;
 
   return (
-    <div
+    <span
       className={cn(
-        "text-[#b5b5b5a4] bg-clip-text inline-block",
-        disabled ? "" : "animate-shiny-text",
+        "bg-clip-text font-black tracking-tight select-none inline-block",
+        disabled ? "text-white" : "animate-shiny-text",
         className
       )}
       style={{
-        backgroundImage:
-          "linear-gradient(120deg, rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0.8) 50%, rgba(255, 255, 255, 0) 60%)",
+        background: "linear-gradient(120deg, #ffffff 30%, #a5b4fc 50%, #ffffff 70%)",
         backgroundSize: "200% 100%",
         WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent",
+        color: "transparent",
         animationDuration: animationDuration,
       }}
     >
       {text}
-    </div>
+    </span>
   );
 };
 

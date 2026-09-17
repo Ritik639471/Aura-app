@@ -15,6 +15,7 @@ const Header = () => {
   const token = localStorage.getItem('token');
   const [profile, setProfile] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (token && username) {
@@ -33,6 +34,12 @@ const Header = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [username, token]);
 
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      navigate('/rooms', { state: { searchQuery: searchQuery.trim() } });
+    }
+  };
+
   const handleLogout = () => {
     localStorage.clear();
     navigate('/login');
@@ -41,30 +48,33 @@ const Header = () => {
   if (location.pathname === '/login') return null;
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-slate-900/50 backdrop-blur-xl border-b border-white/10 z-[100] px-4 md:px-8 flex items-center justify-between">
+    <header className="fixed top-0 left-0 right-0 h-16 bg-slate-900/80 backdrop-blur-xl border-b border-white/10 z-[100] px-4 md:px-8 flex items-center justify-between shadow-lg">
       {/* Logo */}
       <div 
-        className="flex items-center gap-2 cursor-pointer group"
+        className="flex items-center gap-2.5 cursor-pointer group"
         onClick={() => navigate('/rooms')}
       >
-        <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/20 group-hover:scale-110 transition-transform">
-          <Hash size={18} className="text-white" />
+        <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/30 group-hover:scale-105 transition-all">
+          <Hash size={20} className="text-white" />
         </div>
-        <ShinyText text="Aura" className="text-xl font-bold tracking-tighter" speed={3} />
+        <ShinyText text="Aura" className="text-2xl font-black tracking-tight drop-shadow-md" speed={3} />
       </div>
 
       {/* Center Search (Global or Contextual) */}
       <div className="hidden md:flex flex-1 max-w-md mx-8 relative group">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors pointer-events-none" />
+        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-400 transition-colors pointer-events-none" />
         <input 
           id="global-search"
           type="text" 
-          placeholder="Search Aura... (Ctrl+K)" 
-          className="w-full bg-white/5 border border-white/5 rounded-xl py-2 pl-10 pr-4 text-sm text-white focus:bg-indigo-500/10 focus:border-indigo-500/30 outline-none transition-all"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={handleSearchKeyDown}
+          placeholder="Search Aura channels... (Press Enter)" 
+          className="w-full bg-slate-800/60 border border-white/10 rounded-xl py-2 pl-10 pr-16 text-sm text-white focus:bg-slate-800 focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all placeholder:text-slate-400"
         />
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-40 group-focus-within:opacity-100 transition-opacity">
-          <kbd className="text-[10px] font-sans font-bold bg-white/10 px-1.5 py-0.5 rounded">Ctrl</kbd>
-          <kbd className="text-[10px] font-sans font-bold bg-white/10 px-1.5 py-0.5 rounded">K</kbd>
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-60 group-focus-within:opacity-100 transition-opacity pointer-events-none">
+          <kbd className="text-[10px] font-sans font-bold bg-white/10 text-slate-300 px-1.5 py-0.5 rounded">Ctrl</kbd>
+          <kbd className="text-[10px] font-sans font-bold bg-white/10 text-slate-300 px-1.5 py-0.5 rounded">K</kbd>
         </div>
       </div>
 

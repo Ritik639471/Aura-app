@@ -13,6 +13,17 @@
   --color-brand-700: #4338ca;
   --color-brand-800: #3730a3;
   --color-brand-900: #312e81;
+
+  --animate-shiny-text: shiny-text 5s linear infinite;
+}
+
+@keyframes shiny-text {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 @layer base {
@@ -21,7 +32,7 @@
   }
   body {
     @apply font-sans antialiased bg-slate-950 text-slate-100 overflow-hidden;
-    background: radial-gradient(circle at top right, theme(colors.slate.900), theme(colors.slate.950));
+    background: radial-gradient(circle at top right, #0f172a, #020617);
   }
 }
 

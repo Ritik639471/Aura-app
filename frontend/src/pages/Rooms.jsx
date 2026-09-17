@@ -28,6 +28,7 @@ const Rooms = () => {
   useEffect(() => {
     if (state?.openCreateModal) setIsCreateModalOpen(true);
     if (state?.activeTab) setActiveTab(state.activeTab);
+    if (state?.searchQuery) setSearchQuery(state.searchQuery);
   }, [state]);
 
   useEffect(() => {

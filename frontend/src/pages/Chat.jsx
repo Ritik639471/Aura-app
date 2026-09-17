@@ -60,6 +60,44 @@ const Chat = () => {
 
   const isPowerUser = roomAdmins.includes(userId) || roomCreatorId === userId;
 
+  const fetchAllChatData = async () => {
+    try {
+      const [histRes, roomsRes, pinnedRes] = await Promise.all([
+        axios.get(`${API_URL}/messages/${room}`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
+        axios.get(`${API_URL}/rooms`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
+        axios.get(`${API_URL}/messages/${room}/pinned`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] }))
+      ]);
+
+      setMessages(histRes.data || []);
+      setPinnedMessages(pinnedRes.data || []);
+      setTimeout(() => scrollToBottom('auto'), 30);
+
+      const cur = (roomsRes.data || []).find(rm => rm.name === room);
+      if (cur) {
+        if (cur.isDirectMessage || room?.startsWith('dm-')) {
+          setIsDM(true);
+          const partner = cur.members?.find(m => (m._id || m) !== userId && m.username !== username);
+          if (partner) setDmPartner(partner.username);
+        } else {
+          setIsDM(false);
+        }
+
+        setRoomId(cur._id);
+        setRoomCreatorId(cur.creator?._id || cur.creator);
+        const adminIds = (cur.admins || []).map(a => a._id || a);
+        setRoomAdmins(adminIds);
+        const creatorId = cur.creator?._id || cur.creator;
+        const members = (cur.members || []).map(m => ({
+          ...m,
+          _isCreator: (m._id || m) === creatorId,
+          _isAdmin: adminIds.includes(m._id || m),
+          _canManage: (userId === creatorId)
+        }));
+        setRoomMembers(members);
+      }
+    } catch (e) {}
+  };
+
   useEffect(() => {
     if (!token || !username || !room) { 
       if (!token || !username) navigate('/login');
@@ -73,9 +111,7 @@ const Chat = () => {
     setRoomId(null);
     setReplyToMessage(null);
 
-    fetchHistory();
-    fetchRoomDetails();
-    fetchPinned();
+    fetchAllChatData();
 
     const s = io(SOCKET_URL);
     setSocket(s);
@@ -125,14 +161,6 @@ const Chat = () => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 80;
     setShowScrollBottom(!isAtBottom);
-  };
-
-  const fetchHistory = async () => {
-    try { 
-      const r = await axios.get(`${API_URL}/messages/${room}`, { headers: { Authorization: `Bearer ${token}` } }); 
-      setMessages(r.data); 
-      setTimeout(() => scrollToBottom('auto'), 50);
-    } catch (e) {}
   };
 
   const fetchPinned = async () => {
