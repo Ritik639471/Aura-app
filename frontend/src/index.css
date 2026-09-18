@@ -63,11 +63,11 @@
   }
   
   .sidebar-primary {
-    @apply w-[72px] h-full bg-slate-900/95 border-r border-white/5 flex flex-col items-center py-4 shrink-0 z-50 transition-all duration-300;
+    @apply w-[64px] sm:w-[72px] h-full bg-slate-900/95 border-r border-white/5 flex flex-col items-center py-4 shrink-0 z-40 transition-all duration-300;
   }
   
   .sidebar-secondary {
-    @apply w-[260px] h-full bg-slate-900/40 border-r border-white/5 flex flex-col shrink-0 backdrop-blur-xl z-40 transition-transform duration-300;
+    @apply w-[260px] h-full bg-slate-900/40 border-r border-white/5 flex flex-col shrink-0 backdrop-blur-xl z-40 transition-all duration-300;
   }
   
   .main-content {
@@ -75,12 +75,12 @@
   }
   
   .member-panel {
-    @apply w-[240px] h-full bg-slate-900/40 border-l border-white/5 flex flex-col shrink-0 z-20 backdrop-blur-xl transition-all duration-300;
+    @apply w-[240px] h-full bg-slate-900/40 border-l border-white/5 flex flex-col shrink-0 z-40 backdrop-blur-xl transition-all duration-300;
   }
 
   @media (max-width: 1024px) {
     .member-panel {
-      @apply absolute right-0 top-0 bottom-0 translate-x-full w-[280px] bg-slate-900/95 backdrop-blur-xl z-[100];
+      @apply fixed right-0 top-0 bottom-0 translate-x-full w-[280px] max-w-[85vw] bg-slate-900/95 border-l border-white/10 backdrop-blur-2xl z-[50];
     }
     .member-panel.open {
       @apply translate-x-0 shadow-[-10px_0_50px_rgba(0,0,0,0.8)];
@@ -89,7 +89,7 @@
 
   @media (max-width: 768px) {
     .sidebar-secondary {
-      @apply absolute left-[72px] top-0 bottom-0 -translate-x-[150%] z-[100] w-[calc(100vw-72px)] bg-slate-900/95;
+      @apply fixed left-[64px] sm:left-[72px] top-0 bottom-0 -translate-x-[150%] z-[50] w-[280px] max-w-[calc(100vw-64px)] bg-slate-900/95 border-r border-white/10 backdrop-blur-2xl;
     }
     .sidebar-secondary.open {
       @apply translate-x-0 shadow-[10px_0_50px_rgba(0,0,0,0.8)];

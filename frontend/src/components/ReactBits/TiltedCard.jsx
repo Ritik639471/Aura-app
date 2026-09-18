@@ -51,13 +51,14 @@ const TiltedCard = ({
       ref={ref}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className={`relative w-full h-full perspective-1000 ${containerClassName}`}
+      className={`relative w-full h-full perspective-1000 isolate ${containerClassName}`}
     >
       <motion.div
         style={{
           rotateX: rotateXSpring,
           rotateY: rotateYSpring,
           transformStyle: "preserve-3d",
+          transform: "translateZ(0)",
         }}
         whileHover={{ scale }}
         className="relative w-full h-full rounded-3xl overflow-hidden shadow-2xl transition-shadow duration-500 hover:shadow-indigo-500/20"

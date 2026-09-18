@@ -26,15 +26,15 @@ const LinkPreview = ({ url }) => {
   useEffect(() => {
     axios.get(`${API_URL}/linkpreview?url=${encodeURIComponent(url)}`)
       .then(r => setPreview(r.data))
-      .catch(() => {});
+      .catch(() => { });
   }, [url]);
 
   if (!preview || preview.error || !preview.title) return null;
 
   return (
-    <motion.a 
-      href={url} 
-      target="_blank" 
+    <motion.a
+      href={url}
+      target="_blank"
       rel="noopener noreferrer"
       initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
@@ -56,27 +56,27 @@ const LinkPreview = ({ url }) => {
   );
 };
 
-const MessageBubble = ({ 
-  msg, 
-  username, 
-  isHighlighted, 
-  onReact, 
-  onEdit, 
-  onDelete, 
-  onPin, 
-  onReply, 
-  onImageClick, 
-  isPowerUser, 
-  searchQuery, 
-  roomUsers, 
-  roomMembers 
+const MessageBubble = ({
+  msg,
+  username,
+  isHighlighted,
+  onReact,
+  onEdit,
+  onDelete,
+  onPin,
+  onReply,
+  onImageClick,
+  isPowerUser,
+  searchQuery,
+  roomUsers,
+  roomMembers
 }) => {
   const [showOptionsTrigger, setShowOptionsTrigger] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(msg.message);
   const [copied, setCopied] = useState(false);
-  
+
   const isMe = msg.author === username;
   const isDeleted = !!msg.deletedAt;
   const linkUrl = !isDeleted && !msg.imageUrl ? extractUrl(msg.message) : null;
@@ -106,7 +106,7 @@ const MessageBubble = ({
     if (!isMe) return null;
     const roomUsersCount = roomUsers?.length || 1;
     const readCount = msg.readBy?.filter(u => u !== username).length || 0;
-    
+
     if (readCount >= (roomUsersCount - 1) && roomUsersCount > 1) {
       return <CheckCheck size={14} className="text-emerald-400" title="Read by everyone" />;
     } else if (readCount > 0) {
@@ -117,19 +117,19 @@ const MessageBubble = ({
 
   const handleEditSubmit = (e) => {
     e.preventDefault();
-    if (editText.trim()) { 
-      onEdit(msg._id, editText, msg.room); 
-      setEditing(false); 
+    if (editText.trim()) {
+      onEdit(msg._id, editText, msg.room);
+      setEditing(false);
       setIsMenuOpen(false);
     }
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 10, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       className={cn("flex items-end gap-3 mb-5 group relative transition-all", isMe && "flex-row-reverse")}
-      onMouseEnter={() => setShowOptionsTrigger(true)} 
+      onMouseEnter={() => setShowOptionsTrigger(true)}
       onMouseLeave={() => { setShowOptionsTrigger(false); setIsMenuOpen(false); }}
     >
       {/* Avatar Display */}
@@ -139,10 +139,10 @@ const MessageBubble = ({
           isMe ? "bg-gradient-to-br from-brand-500 to-indigo-600 text-white" : "bg-slate-800 text-slate-300"
         )}>
           {authorAvatar ? (
-            <img 
-              src={getOptimizedImage(authorAvatar, 100)} 
-              alt={msg.author} 
-              className="w-full h-full object-cover" 
+            <img
+              src={getOptimizedImage(authorAvatar, 100)}
+              alt={msg.author}
+              className="w-full h-full object-cover"
             />
           ) : (
             msg.author[0].toUpperCase()
@@ -166,10 +166,10 @@ const MessageBubble = ({
           </div>
         )}
 
-        {/* Clean Menu Trigger Button on Hover (Stops automatic clutter popups) */}
+        {/*Menu Trigger Button on Hover */}
         <AnimatePresence>
           {showOptionsTrigger && !isDeleted && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
@@ -178,7 +178,7 @@ const MessageBubble = ({
                 isMe ? "-left-10" : "-right-10"
               )}
             >
-              <button 
+              <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="p-1.5 rounded-xl bg-slate-900/90 border border-white/10 text-slate-400 hover:text-white hover:bg-slate-800 transition-all shadow-xl"
                 title="Options"
@@ -189,10 +189,10 @@ const MessageBubble = ({
           )}
         </AnimatePresence>
 
-        {/* Options Dropdown Menu (Opened only when user clicks More Options) */}
+        {/* Options Dropdown Menu */}
         <AnimatePresence>
           {isMenuOpen && !isDeleted && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: -5, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -5, scale: 0.95 }}
@@ -204,9 +204,9 @@ const MessageBubble = ({
               {/* Quick Reactions */}
               <div className="flex justify-between items-center bg-white/5 p-1 rounded-xl">
                 {REACTION_EMOJIS.map(emoji => (
-                  <button 
-                    key={emoji} 
-                    onClick={() => { onReact(msg._id, emoji); setIsMenuOpen(false); }} 
+                  <button
+                    key={emoji}
+                    onClick={() => { onReact(msg._id, emoji); setIsMenuOpen(false); }}
                     className="p-1 hover:bg-white/10 rounded-lg text-base hover:scale-125 transition-transform"
                   >
                     {emoji}
@@ -216,20 +216,20 @@ const MessageBubble = ({
 
               {/* Action List */}
               <div className="flex flex-col gap-0.5 text-xs font-semibold text-slate-300">
-                <button 
+                <button
                   onClick={() => { onReply(msg); setIsMenuOpen(false); }}
                   className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-white/10 hover:text-white transition-colors"
                 >
                   <ReplyIcon size={14} className="text-brand-400" /> Reply
                 </button>
-                <button 
+                <button
                   onClick={handleCopy}
                   className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-white/10 hover:text-white transition-colors"
                 >
                   <Copy size={14} className="text-slate-400" /> {copied ? 'Copied!' : 'Copy Text'}
                 </button>
                 {isMe && (
-                  <button 
+                  <button
                     onClick={() => { setEditing(true); setIsMenuOpen(false); }}
                     className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-white/10 hover:text-white transition-colors"
                   >
@@ -237,7 +237,7 @@ const MessageBubble = ({
                   </button>
                 )}
                 {isPowerUser && (
-                  <button 
+                  <button
                     onClick={() => { onPin(msg._id, msg.room); setIsMenuOpen(false); }}
                     className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-white/10 hover:text-white transition-colors"
                   >
@@ -245,7 +245,7 @@ const MessageBubble = ({
                   </button>
                 )}
                 {(isMe || isPowerUser) && (
-                  <button 
+                  <button
                     onClick={() => { onDelete(msg._id, msg.room); setIsMenuOpen(false); }}
                     className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-red-500/20 hover:text-red-400 transition-colors"
                   >
@@ -261,9 +261,9 @@ const MessageBubble = ({
         <div className={cn(
           "relative px-4 py-3 rounded-2xl transition-all duration-300 shadow-lg text-sm",
           isDeleted ? "bg-white/5 border border-white/5 italic text-slate-500" :
-          isHighlighted ? "bg-brand-600/30 border border-brand-500/50 shadow-brand-500/20" :
-          isMe ? "bg-gradient-to-br from-brand-600 to-indigo-600 text-white rounded-br-sm shadow-brand-500/10" : 
-          "bg-slate-800/80 border border-white/5 text-white rounded-bl-sm hover:bg-slate-700/80 backdrop-blur-sm"
+            isHighlighted ? "bg-brand-600/30 border border-brand-500/50 shadow-brand-500/20" :
+              isMe ? "bg-gradient-to-br from-brand-600 to-indigo-600 text-white rounded-br-sm shadow-brand-500/10" :
+                "bg-slate-800/80 border border-white/5 text-white rounded-bl-sm hover:bg-slate-700/80 backdrop-blur-sm"
         )}>
           {isDeleted ? (
             <div className="flex items-center gap-2 opacity-60">
@@ -271,11 +271,11 @@ const MessageBubble = ({
             </div>
           ) : editing ? (
             <form onSubmit={handleEditSubmit} className="flex gap-2 min-w-[200px]">
-              <input 
-                value={editText} 
-                onChange={e => setEditText(e.target.value)} 
+              <input
+                value={editText}
+                onChange={e => setEditText(e.target.value)}
                 className="bg-slate-900/50 border border-white/20 rounded-lg px-3 py-1.5 text-sm text-white w-full outline-none focus:border-brand-400 transition-colors"
-                autoFocus 
+                autoFocus
               />
               <button type="submit" className="text-emerald-400 hover:bg-emerald-400/10 p-2 rounded-lg">✓</button>
               <button type="button" onClick={() => setEditing(false)} className="text-red-400 hover:bg-red-400/10 p-2 rounded-lg">✕</button>
@@ -295,14 +295,14 @@ const MessageBubble = ({
 
               {/* Low-Quality Thumbnail Image with In-App Lightbox trigger */}
               {msg.imageUrl && (
-                <div 
+                <div
                   onClick={() => onImageClick && onImageClick(msg.imageUrl)}
                   className="block mb-2 overflow-hidden rounded-2xl shadow-lg border border-white/10 cursor-pointer group/img relative"
                 >
-                  <img 
-                    src={getOptimizedImage(msg.imageUrl, 400)} 
-                    alt="attachment" 
-                    className="max-w-[260px] max-h-[200px] w-full object-cover rounded-2xl group-hover/img:scale-105 transition-transform duration-300" 
+                  <img
+                    src={getOptimizedImage(msg.imageUrl, 400)}
+                    alt="attachment"
+                    className="max-w-[260px] max-h-[200px] w-full object-cover rounded-2xl group-hover/img:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-black/30 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity text-white text-xs font-bold gap-1">
                     🔍 Expand Image
@@ -336,15 +336,15 @@ const MessageBubble = ({
             isMe ? "justify-end mr-1" : "justify-start ml-1"
           )}>
             {msg.reactions.map((r, i) => (
-              <motion.button 
+              <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                key={i} 
-                onClick={() => onReact(msg._id, r.emoji)} 
+                key={i}
+                onClick={() => onReact(msg._id, r.emoji)}
                 className={cn(
                   "flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-black border transition-all shadow-sm",
-                  r.users.includes(username) 
-                    ? "bg-brand-500/20 border-brand-500/50 text-brand-300" 
+                  r.users.includes(username)
+                    ? "bg-brand-500/20 border-brand-500/50 text-brand-300"
                     : "bg-slate-800 border-white/10 text-white/80 hover:bg-slate-700"
                 )}
               >

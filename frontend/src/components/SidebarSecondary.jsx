@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Hash, MessageCircle, ChevronDown, Plus, Monitor, LogOut } from 'lucide-react';
+import { Hash, MessageCircle, ChevronDown, Plus, Monitor, LogOut, X } from 'lucide-react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
 import TiltedCard from './ReactBits/TiltedCard';
+import { useSidebar } from './Layout';
 
 import { API_URL } from '../config';
 
-const SidebarSecondary = ({ isOpen }) => {
+const SidebarSecondary = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const sidebarContext = useSidebar();
+  const handleClose = onClose || sidebarContext?.setIsLeftSidebarOpen ? () => sidebarContext.setIsLeftSidebarOpen(false) : undefined;
+
   const [rooms, setRooms] = useState([]);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -41,16 +45,30 @@ const SidebarSecondary = ({ isOpen }) => {
     } catch (err) {}
   };
 
+  const handleNavigateRoom = (path, stateObj) => {
+    navigate(path, stateObj);
+    if (window.innerWidth < 768 && handleClose) {
+      handleClose();
+    }
+  };
+
   const joinedRooms = rooms.filter(r => !r.isDirectMessage && r.members?.some(m => (m._id || m) === userId));
   const myDMs = rooms.filter(r => r.isDirectMessage);
 
   return (
     <aside className={cn("sidebar-secondary", isOpen && "open")}>
-      {/* Search/Header Area */}
-      <div className="p-5 border-b border-white/5">
-        <button className="w-full bg-black/40 border border-white/5 rounded-2xl py-3 px-4 flex items-center justify-between text-slate-400 group hover:border-white/10 transition-all">
-          <span className="text-sm font-black uppercase tracking-widest italic text-indigo-400">Aura Chat</span>
-          <ChevronDown size={18} className="group-hover:text-white transition-colors" />
+      {/* Header Area */}
+      <div className="p-4 sm:p-5 border-b border-white/5 flex items-center justify-between gap-2">
+        <button className="flex-1 bg-black/40 border border-white/5 rounded-2xl py-2.5 px-3 sm:px-4 flex items-center justify-between text-slate-400 group hover:border-white/10 transition-all">
+          <span className="text-xs sm:text-sm font-black uppercase tracking-widest italic text-indigo-400">Aura Chat</span>
+          <ChevronDown size={16} className="group-hover:text-white transition-colors" />
+        </button>
+        <button 
+          onClick={handleClose}
+          className="p-2 text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-all md:hidden"
+          title="Close Sidebar"
+        >
+          <X size={18} />
         </button>
       </div>
 
@@ -70,7 +88,7 @@ const SidebarSecondary = ({ isOpen }) => {
             {joinedRooms.map(room => (
               <button
                 key={room._id}
-                onClick={() => navigate(`/chat/${room.name}`, { state: { room: room.name } })}
+                onClick={() => handleNavigateRoom(`/chat/${room.name}`, { state: { room: room.name } })}
                 className={cn(
                   "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl group transition-all duration-200",
                   location.pathname === `/chat/${room.name}`
@@ -96,7 +114,7 @@ const SidebarSecondary = ({ isOpen }) => {
               return (
                 <button
                   key={dm._id}
-                  onClick={() => navigate(`/chat/${dm.name}`, { state: { room: dm.name, isDM: true, dmPartner: partner } })}
+                  onClick={() => handleNavigateRoom(`/chat/${dm.name}`, { state: { room: dm.name, isDM: true, dmPartner: partner } })}
                   className={cn(
                     "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl group transition-all duration-200",
                     location.pathname === `/chat/${dm.name}`

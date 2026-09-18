@@ -220,7 +220,7 @@ const Rooms = () => {
 
       <AnimatePresence>
         {isCreateModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="absolute inset-0 bg-black/60 backdrop-blur-md"
@@ -230,26 +230,26 @@ const Rooms = () => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-xl bg-slate-900 border border-white/10 rounded-[32px] p-10 shadow-2xl"
+              className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-slate-900 border border-white/10 rounded-3xl p-5 sm:p-8 shadow-2xl z-10"
             >
-              <h2 className="text-2xl font-black mb-8 flex items-center gap-4 text-white">
-                <Plus className="text-indigo-500" size={28} /> Create New Channel
+              <h2 className="text-xl sm:text-2xl font-black mb-5 sm:mb-8 flex items-center gap-3 text-white">
+                <Plus className="text-indigo-500" size={24} /> Create New Channel
               </h2>
-              <form onSubmit={handleCreateRoom} className="space-y-8">
-                <div className="space-y-3">
-                  <label className="text-xs font-black text-slate-500 uppercase tracking-widest ml-1">Channel Name</label>
+              <form onSubmit={handleCreateRoom} className="space-y-6">
+                <div className="space-y-2 sm:space-y-3">
+                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Channel Name</label>
                   <input 
                     autoFocus
-                    className="w-full bg-black/40 border border-white/10 rounded-2xl py-3 px-4 text-white focus:border-indigo-500/50 outline-none transition-all placeholder:text-slate-600" 
+                    className="w-full bg-black/40 border border-white/10 rounded-2xl py-3 px-4 text-white focus:border-indigo-500/50 outline-none transition-all placeholder:text-slate-600 text-sm sm:text-base" 
                     type="text" 
                     placeholder="e.g. brainstorming" 
                     value={newRoomName} 
                     onChange={(e) => setNewRoomName(e.target.value)} 
                   />
                 </div>
-                <div className="flex gap-3 pt-4">
-                  <button type="button" onClick={() => setIsCreateModalOpen(false)} className="flex-1 px-6 py-3 rounded-2xl bg-white/5 hover:bg-white/10 font-bold transition-all">Cancel</button>
-                  <button type="submit" className="flex-1 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20">Create</button>
+                <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={() => setIsCreateModalOpen(false)} className="flex-1 px-4 sm:px-6 py-3 rounded-2xl bg-white/5 hover:bg-white/10 font-bold transition-all text-sm sm:text-base">Cancel</button>
+                  <button type="submit" className="flex-1 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/20 text-sm sm:text-base">Create</button>
                 </div>
               </form>
             </motion.div>

@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
-import { Send, Paperclip, Smile, Search, X, Pin, ChevronDown, Trash2, User, Reply as ReplyIcon } from 'lucide-react';
+import { Send, Paperclip, Smile, Search, X, Pin, ChevronDown, Trash2, User, Users, PanelLeft, Menu, Reply as ReplyIcon } from 'lucide-react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -11,11 +12,13 @@ import GroupInfoModal from '../components/GroupInfoModal';
 import EmojiPicker from '../components/EmojiPicker';
 import { cn } from '../utils/cn';
 import { API_URL, SOCKET_URL } from '../config';
+import { useSidebar } from '../components/Layout';
 
 const Chat = () => {
   const { state } = useLocation();
   const { roomName } = useParams();
   const navigate = useNavigate();
+  const { isLeftSidebarOpen, toggleLeftSidebar } = useSidebar();
 
   const username = localStorage.getItem('username');
   const token = localStorage.getItem('token');
@@ -41,7 +44,7 @@ const Chat = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showPinned, setShowPinned] = useState(false);
   const [showScrollBottom, setShowScrollBottom] = useState(false);
-  const [isMemberPanelOpen, setIsMemberPanelOpen] = useState(true);
+  const [isMemberPanelOpen, setIsMemberPanelOpen] = useState(() => window.innerWidth > 1024);
 
   const [roomUsers, setRoomUsers] = useState([]);
   const [roomMembers, setRoomMembers] = useState([]);
@@ -323,11 +326,20 @@ const Chat = () => {
       </AnimatePresence>
 
       <div className="flex-1 flex flex-col min-w-0 bg-transparent relative">
-        <div className="h-16 border-b border-white/5 flex justify-between items-center px-6 bg-slate-900/60 backdrop-blur-xl z-30 shrink-0 shadow-lg">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="h-16 border-b border-white/5 flex justify-between items-center px-3 sm:px-6 bg-slate-900/60 backdrop-blur-xl z-30 shrink-0 shadow-lg gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            {/* Toggle Left Sidebar Icon for Mobile */}
+            <button
+              onClick={toggleLeftSidebar}
+              className="p-2 text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-all md:hidden shrink-0"
+              title="Toggle Channels Sidebar"
+            >
+              <PanelLeft size={20} />
+            </button>
+
             <div className="cursor-pointer min-w-0 group" onClick={() => setShowGroupInfo(true)}>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold tracking-tight text-white group-hover:text-brand-400 transition-colors truncate">
+                <h2 className="text-sm sm:text-base font-bold tracking-tight text-white group-hover:text-brand-400 transition-colors truncate">
                   {isDM ? dmPartner : `#${room}`}
                 </h2>
               </div>
@@ -338,14 +350,15 @@ const Chat = () => {
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <div className="flex items-center gap-1">
               <button 
                 onClick={() => { setIsSearchOpen(!isSearchOpen); setSearchQuery(''); }}
                 className={cn(
                   "p-2 rounded-xl transition-all",
-                  isSearchOpen ? "bg-brand-500/20 text-brand-400" : "text-slate-500 hover:text-white hover:bg-white/5"
+                  isSearchOpen ? "bg-brand-500/20 text-brand-400" : "text-slate-400 hover:text-white hover:bg-white/5"
                 )}
+                title="Search Messages"
               >
                 <Search size={20} />
               </button>
@@ -354,29 +367,31 @@ const Chat = () => {
                   onClick={() => setShowPinned(!showPinned)} 
                   className={cn(
                     "p-2 rounded-xl transition-all",
-                    showPinned ? "bg-yellow-400/20 text-yellow-500" : "text-slate-500 hover:text-white hover:bg-white/5"
+                    showPinned ? "bg-yellow-400/20 text-yellow-500" : "text-slate-400 hover:text-white hover:bg-white/5"
                   )}
+                  title="Pinned Messages"
                 >
                   <Pin size={20} />
                 </button>
               )}
               {isPowerUser && (
-                <button onClick={handleClearChat} className="p-2 rounded-xl text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all" title="Clear Chat">
+                <button onClick={handleClearChat} className="p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all" title="Clear Chat">
                   <Trash2 size={20} />
                 </button>
               )}
             </div>
 
-            <div className="w-[1px] h-6 bg-white/5 mx-1" />
+            <div className="w-[1px] h-6 bg-white/5 mx-0.5" />
 
             <button 
               onClick={() => setIsMemberPanelOpen(!isMemberPanelOpen)}
               className={cn(
-                "p-2 rounded-xl transition-all",
-                isMemberPanelOpen ? "bg-brand-500/20 text-brand-400" : "text-slate-500 hover:text-white hover:bg-white/5"
+                "p-2 rounded-xl transition-all flex items-center gap-1",
+                isMemberPanelOpen ? "bg-brand-500/20 text-brand-400" : "text-slate-400 hover:text-white hover:bg-white/5"
               )}
+              title="Toggle Members List"
             >
-              <User size={22} />
+              <Users size={20} />
             </button>
           </div>
         </div>
@@ -499,8 +514,10 @@ const Chat = () => {
           <AnimatePresence>
             {showEmojiPicker && (
               <motion.div 
-                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-                className="absolute bottom-full left-4 mb-4 z-50 shadow-2xl"
+                initial={{ opacity: 0, y: 15, scale: 0.95 }} 
+                animate={{ opacity: 1, y: 0, scale: 1 }} 
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                className="absolute bottom-full left-2 sm:left-4 mb-3 z-50 shadow-2xl max-w-[calc(100vw-2rem)]"
               >
                 <EmojiPicker onSelect={emoji => { setCurrentMessage(p => p + emoji); setShowEmojiPicker(false); msgInputRef.current?.focus(); }} onClose={() => setShowEmojiPicker(false)} />
               </motion.div>
@@ -575,13 +592,13 @@ const Chat = () => {
       />
 
       {/* In-App Image Lightbox Modal */}
-      <AnimatePresence>
-        {selectedImage && (
+      {selectedImage && createPortal(
+        <AnimatePresence>
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+            className="fixed inset-0 z-[99999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
             onClick={() => setSelectedImage(null)}
           >
             <div className="relative max-w-[90vw] max-h-[90vh] flex flex-col items-center" onClick={e => e.stopPropagation()}>
@@ -609,8 +626,9 @@ const Chat = () => {
               </div>
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };

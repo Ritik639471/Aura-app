@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Plus, Search, User, LogOut, Settings, Bell, Hash } from 'lucide-react';
+import { Plus, Search, User, LogOut, Settings, Bell, Hash, Menu, X } from 'lucide-react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import ShinyText from './ReactBits/ShinyText';
 import { cn } from '../utils/cn';
+import { useSidebar } from './Layout';
 
 import { API_URL } from '../config';
 
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isLeftSidebarOpen, toggleLeftSidebar } = useSidebar();
   const username = localStorage.getItem('username');
   const token = localStorage.getItem('token');
   const [profile, setProfile] = useState(null);
@@ -48,16 +50,26 @@ const Header = () => {
   if (location.pathname === '/login') return null;
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-slate-900/80 backdrop-blur-xl border-b border-white/10 z-[100] px-4 md:px-8 flex items-center justify-between shadow-lg">
-      {/* Logo */}
-      <div 
-        className="flex items-center gap-2.5 cursor-pointer group"
-        onClick={() => navigate('/rooms')}
-      >
-        <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/30 group-hover:scale-105 transition-all">
-          <Hash size={20} className="text-white" />
+    <header className="fixed top-0 left-0 right-0 h-16 bg-slate-900/80 backdrop-blur-xl border-b border-white/10 z-[100] px-3 sm:px-6 md:px-8 flex items-center justify-between shadow-lg">
+      {/* Left Area: Toggle Menu + Logo */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        <button 
+          onClick={toggleLeftSidebar}
+          className="p-2 text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl transition-all md:hidden"
+          title="Toggle Navigation Menu"
+        >
+          {isLeftSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+
+        <div 
+          className="flex items-center gap-2 sm:gap-2.5 cursor-pointer group"
+          onClick={() => navigate('/rooms')}
+        >
+          <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-600/30 group-hover:scale-105 transition-all">
+            <Hash size={20} className="text-white" />
+          </div>
+          <ShinyText text="Aura" className="text-xl sm:text-2xl font-black tracking-tight drop-shadow-md" speed={3} />
         </div>
-        <ShinyText text="Aura" className="text-2xl font-black tracking-tight drop-shadow-md" speed={3} />
       </div>
 
       {/* Center Search (Global or Contextual) */}

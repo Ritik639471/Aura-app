@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Shield, Info } from 'lucide-react';
+import { User, Shield, Info, X } from 'lucide-react';
 import { cn } from '../utils/cn';
 
 const MemberPanel = ({ members, onlineUsers, isOpen, onClose }) => {
@@ -9,12 +9,26 @@ const MemberPanel = ({ members, onlineUsers, isOpen, onClose }) => {
   const offline = members.filter(m => !onlineUsers.includes(m.username || m.author));
 
   return (
-    <aside className="member-panel open">
-      <div className="p-4 border-b border-white/5 flex items-center justify-between">
-        <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-          Members <span className="bg-slate-800 text-[10px] px-1.5 py-0.5 rounded text-slate-400">{members.length}</span>
-        </h3>
-      </div>
+    <>
+      {/* Mobile/Tablet Backdrop Overlay */}
+      <div 
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[45] lg:hidden"
+        onClick={onClose}
+      />
+
+      <aside className="member-panel open">
+        <div className="p-4 border-b border-white/5 flex items-center justify-between">
+          <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
+            Members <span className="bg-slate-800 text-[10px] px-1.5 py-0.5 rounded text-slate-300">{members.length}</span>
+          </h3>
+          <button 
+            onClick={onClose}
+            className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors lg:hidden"
+            title="Close Member Panel"
+          >
+            <X size={18} />
+          </button>
+        </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-3 space-y-6">
         {/* Online Section */}
@@ -76,6 +90,7 @@ const MemberPanel = ({ members, onlineUsers, isOpen, onClose }) => {
         </section>
       </div>
     </aside>
+  </>
   );
 };
 

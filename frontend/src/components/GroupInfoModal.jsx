@@ -9,23 +9,23 @@ const GroupInfoModal = ({ room, roomMembers, roomUsers, username, userId, token,
   const isCreator = roomMembers.find(m => (m._id === userId) && m._isCreator);
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={onClose}>
-      <div className="glass-panel" style={{ padding: '28px', maxWidth: '420px', width: '100%', maxHeight: '82vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: 'linear-gradient(135deg, var(--primary-accent), var(--secondary-accent))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Hash size={22} color="white" />
+    <div className="fixed inset-0 bg-black/65 backdrop-blur-md z-[100] flex items-center justify-center p-3 sm:p-4" onClick={onClose}>
+      <div className="glass-panel p-5 sm:p-7 max-w-md w-full max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shrink-0">
+              <Hash size={22} className="text-white" />
             </div>
             <div>
-              <h2 style={{ fontWeight: '700', fontSize: '1.2rem' }}>{isDM ? dmPartner : `#${room}`}</h2>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{isDM ? 'Direct Message' : `${roomMembers.length} members · ${roomUsers.length} online`}</p>
+              <h2 className="font-bold text-lg text-white">{isDM ? dmPartner : `#${room}`}</h2>
+              <p className="text-xs text-slate-400">{isDM ? 'Direct Message' : `${roomMembers.length} members · ${roomUsers.length} online`}</p>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}><X size={20} /></button>
+          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-white rounded-lg transition-colors"><X size={20} /></button>
         </div>
 
-        <h3 style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-secondary)', marginBottom: '10px' }}>Members ({roomMembers.length})</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Members ({roomMembers.length})</h3>
+        <div className="flex flex-col gap-2">
           {roomMembers.map((m, i) => {
             const name = m.username || m;
             const mid = m._id || m;
@@ -33,21 +33,21 @@ const GroupInfoModal = ({ room, roomMembers, roomUsers, username, userId, token,
             const isAdmin = m._isAdmin;
             const isCreatorMember = m._isCreator;
             return (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', background: 'rgba(255,255,255,0.04)', borderRadius: '10px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg,var(--primary-accent),var(--secondary-accent))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '0.9rem', flexShrink: 0 }}>
-                  {m.avatar ? <img src={m.avatar} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : name[0]?.toUpperCase()}
+              <div key={i} className="flex items-center gap-3 p-2.5 bg-white/5 rounded-xl border border-white/5">
+                <div className="w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-sm text-white shrink-0 overflow-hidden">
+                  {m.avatar ? <img src={m.avatar} alt="" className="w-full h-full object-cover" /> : name[0]?.toUpperCase()}
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                    <p style={{ fontWeight: '600', fontSize: '0.9rem' }}>{name} {name === username && '(You)'}</p>
-                    {isCreatorMember && <span style={{ fontSize: '0.65rem', background: 'rgba(99,102,241,0.2)', color: 'var(--primary-accent)', borderRadius: '6px', padding: '2px 6px' }}>Creator</span>}
-                    {isAdmin && !isCreatorMember && <span style={{ fontSize: '0.65rem', background: 'rgba(99,102,241,0.1)', color: 'var(--primary-accent)', borderRadius: '6px', padding: '2px 6px' }}>Admin</span>}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="font-semibold text-sm text-white truncate">{name} {name === username && '(You)'}</p>
+                    {isCreatorMember && <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded font-bold">Creator</span>}
+                    {isAdmin && !isCreatorMember && <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded font-bold">Admin</span>}
                   </div>
-                  <p style={{ fontSize: '0.72rem', color: isOnline ? 'var(--success)' : 'var(--text-secondary)' }}>{isOnline ? '● Online' : '○ Offline'}</p>
+                  <p className={`text-xs ${isOnline ? 'text-emerald-400' : 'text-slate-500'}`}>{isOnline ? '● Online' : '○ Offline'}</p>
                 </div>
                 {/* Make/Remove Admin button — visible to creator only, not for themselves */}
                 {m._canManage && name !== username && (
-                  <button onClick={() => onMakeAdmin(mid, isAdmin)} style={{ background: isAdmin ? 'rgba(239,68,68,0.1)' : 'rgba(99,102,241,0.1)', border: `1px solid ${isAdmin ? 'rgba(239,68,68,0.3)' : 'rgba(99,102,241,0.3)'}`, color: isAdmin ? 'var(--danger)' : 'var(--primary-accent)', borderRadius: '8px', padding: '4px 10px', cursor: 'pointer', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                  <button onClick={() => onMakeAdmin(mid, isAdmin)} className={`text-xs px-2.5 py-1 rounded-lg font-semibold transition-all shrink-0 ${isAdmin ? 'bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20' : 'bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/20'}`}>
                     {isAdmin ? '- Admin' : '+ Admin'}
                   </button>
                 )}
