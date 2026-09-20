@@ -114,21 +114,21 @@ const Rooms = () => {
   return (
     <div className="flex flex-col flex-1 min-h-0 min-w-0 bg-transparent overflow-hidden">
       
-      <header className="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-slate-900/40 backdrop-blur-md shrink-0">
-        <div className="flex items-center gap-4">
-          <h2 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
-            <Search className="text-indigo-400" size={20} />
+      <header className="min-h-16 py-3 px-4 sm:px-8 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-900/40 backdrop-blur-md shrink-0">
+        <div className="flex items-center gap-3">
+          <h2 className="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            <Search className="text-indigo-400 shrink-0" size={20} />
             Explore Channels
           </h2>
         </div>
         
-        <div className="flex gap-4 p-1.5 bg-black/20 backdrop-blur-md rounded-2xl border border-white/5">
+        <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 bg-black/20 backdrop-blur-md rounded-2xl border border-white/5 overflow-x-auto custom-scrollbar max-w-full">
           {['joined', 'discover', 'dms'].map(tab => (
             <button 
               key={tab} 
               onClick={() => setActiveTab(tab)} 
               className={cn(
-                "px-6 py-2.5 rounded-xl font-bold text-sm uppercase tracking-widest transition-all duration-300 whitespace-nowrap",
+                "px-3.5 sm:px-6 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm uppercase tracking-wider sm:tracking-widest transition-all duration-300 whitespace-nowrap shrink-0",
                 activeTab === tab 
                   ? "bg-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.4)]" 
                   : "text-slate-400 hover:text-white hover:bg-white/5"
@@ -140,8 +140,8 @@ const Rooms = () => {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-10">
-        <div className="w-full space-y-8">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 md:p-10">
+        <div className="w-full space-y-6 sm:space-y-8">
           
           <div className="relative group max-w-lg">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
@@ -273,20 +273,20 @@ const RoomCard = ({ room, userId, onClick, onDelete, isMember, partnerName }) =>
       className="group"
     >
       <SpotlightCard 
-        className="!p-8 !bg-white/5 hover:!bg-white/10 !rounded-[32px] cursor-pointer border-white/5 shadow-2xl hover:shadow-indigo-500/10 transition-all flex flex-col justify-between min-h-[220px]"
+        className="!p-5 sm:!p-8 !bg-white/5 hover:!bg-white/10 !rounded-[24px] sm:!rounded-[32px] cursor-pointer border-white/5 shadow-2xl hover:shadow-indigo-500/10 transition-all flex flex-col justify-between min-h-[180px] sm:min-h-[220px]"
         onClick={onClick}
       >
-        <div className="flex justify-between items-start w-full">
-          <div className="flex items-center gap-5">
+        <div className="flex justify-between items-start w-full gap-2">
+          <div className="flex items-center gap-3 sm:gap-5 min-w-0">
             <div className={cn(
-              "w-16 h-16 rounded-[24px] flex items-center justify-center text-2xl font-bold shadow-inner",
+              "w-12 h-12 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[24px] flex items-center justify-center text-xl sm:text-2xl font-bold shadow-inner shrink-0",
               partnerName ? "bg-gradient-to-br from-indigo-500 to-violet-600 text-white" : "bg-white/10 text-indigo-400 group-hover:bg-indigo-500/20 transition-colors"
             )}>
-              {partnerName ? initial.toUpperCase() : <Hash size={32} />}
+              {partnerName ? initial.toUpperCase() : <Hash className="w-6 h-6 sm:w-8 sm:h-8" />}
             </div>
             <div className="min-w-0">
-              <h3 className="font-bold text-xl truncate pr-2 tracking-tight text-white">{partnerName || room.name}</h3>
-              <p className="text-xs font-black uppercase tracking-widest text-slate-500 mt-1">
+              <h3 className="font-bold text-base sm:text-xl truncate pr-2 tracking-tight text-white">{partnerName || room.name}</h3>
+              <p className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-500 mt-0.5 sm:mt-1">
                 {partnerName ? 'Direct Message' : `${room.members?.length || 0} members`}
               </p>
             </div>
@@ -294,15 +294,15 @@ const RoomCard = ({ room, userId, onClick, onDelete, isMember, partnerName }) =>
           {isCreator && onDelete && (
             <button 
               onClick={(e) => { e.stopPropagation(); onDelete(e); }}
-              className="p-2 text-slate-600 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+              className="p-1.5 sm:p-2 text-slate-600 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100 shrink-0"
             >
-              <Trash2 size={18} />
+              <Trash2 size={16} />
             </button>
           )}
         </div>
 
-        <div className="mt-4 flex items-center justify-between">
-          <div className="flex -space-x-2">
+        <div className="mt-4 flex items-center justify-between gap-2">
+          <div className="flex -space-x-2 shrink-0">
             {(room.members || []).slice(0, 3).map((m, i) => (
               <div key={i} className="w-6 h-6 rounded-full border-2 border-slate-900 bg-slate-700 flex items-center justify-center text-[8px] font-bold overflow-hidden">
                 {m.username?.[0]?.toUpperCase() || i}
@@ -316,7 +316,7 @@ const RoomCard = ({ room, userId, onClick, onDelete, isMember, partnerName }) =>
           </div>
           
           <div className={cn(
-            "text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest transition-all shadow-lg",
+            "text-[9px] sm:text-[10px] font-black px-3 sm:px-4 py-1.5 sm:py-2 rounded-full uppercase tracking-wider sm:tracking-widest transition-all shadow-lg shrink-0",
             isMember 
               ? "bg-gradient-to-r from-brand-600 to-indigo-600 text-white shadow-brand-500/20 group-hover:shadow-brand-500/40 group-hover:scale-105" 
               : "bg-emerald-500 text-white shadow-emerald-500/20 group-hover:bg-emerald-400 group-hover:scale-105"

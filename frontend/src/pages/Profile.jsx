@@ -49,11 +49,11 @@ const Profile = () => {
   const avatarSrc = preview || profile.avatar;
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 bg-slate-950/20 overflow-y-auto">
+    <div className="min-h-screen w-full flex items-center justify-center p-3 sm:p-6 md:p-8 bg-slate-950/20 overflow-y-auto">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-panel p-8 md:p-12 w-full max-w-lg flex flex-col gap-8 relative overflow-hidden"
+        className="glass-panel p-5 sm:p-8 md:p-12 w-full max-w-lg flex flex-col gap-6 sm:gap-8 relative overflow-hidden my-auto"
       >
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-600/20 blur-3xl rounded-full" />
         <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-violet-600/20 blur-3xl rounded-full" />
