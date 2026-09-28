@@ -20,15 +20,37 @@ const app = express();
 const server = http.createServer(app);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://aura-app.vercel.app',
+  process.env.FRONTEND_URL,
+  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [])
+].filter(Boolean);
+
+const corsOriginHandler = (origin, callback) => {
+  if (!origin) return callback(null, true);
+  if (
+    allowedOrigins.includes(origin) ||
+    allowedOrigins.includes('*') ||
+    origin.endsWith('.vercel.app') ||
+    origin.endsWith('.netlify.app')
+  ) {
+    return callback(null, true);
+  }
+  return callback(null, true);
+};
+
 const io = new Server(server, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
+    origin: corsOriginHandler,
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
 app.use(cors({
-  origin: '*',
+  origin: corsOriginHandler,
   credentials: true
 }));
 app.use(express.json());
