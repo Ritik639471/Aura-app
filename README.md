@@ -5,7 +5,7 @@
 <img src="https://capsule-render.vercel.app/api?type=waving&color=6366f1&height=180&section=header&text=Aura%20Chat&fontSize=50&fontColor=ffffff&fontAlignY=40&desc=Real-Time%20Messaging%20%E2%80%A2%20Channels%20%E2%80%A2%20DMs%20%E2%80%A2%20WebSockets&descAlignY=62&descSize=18" width="100%"/>
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-6366f1?style=for-the-badge&logo=vercel&logoColor=white)](https://aura-app-in-chat.vercel.app/)
-[![Backend API](https://img.shields.io/badge/Backend%20API-Render-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://aura-app-keg8.onrender.com)
+[![Backend API](https://img.shields.io/badge/Backend%20API-AWS_EC2-FF9900?style=for-the-badge&logo=amazonwebservices&logoColor=white)](https://ritik-chat.duckdns.org/api/health)
 [![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Ritik639471/Aura-app)
 
 <br/>
@@ -18,6 +18,9 @@
 [![Express 5](https://img.shields.io/badge/Express%205-000000?style=flat-square&logo=express&logoColor=white)](https://expressjs.com/)
 [![MongoDB](https://img.shields.io/badge/MongoDB%20Atlas-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
 [![Socket.io](https://img.shields.io/badge/Socket.io%204-010101?style=flat-square&logo=socketdotio&logoColor=white)](https://socket.io/)
+[![AWS EC2](https://img.shields.io/badge/AWS_EC2-232F3E?style=flat-square&logo=amazonwebservices&logoColor=white)](https://aws.amazon.com/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Nginx](https://img.shields.io/badge/Nginx-009639?style=flat-square&logo=nginx&logoColor=white)](https://nginx.org/)
 [![Cloudinary](https://img.shields.io/badge/Cloudinary-3448C5?style=flat-square&logo=cloudinary&logoColor=white)](https://cloudinary.com/)
 
 **A modern, production-grade real-time chat platform engineered with React 19, Express 5, MongoDB, and bi-directional WebSocket communication via Socket.io.**
@@ -342,21 +345,19 @@ Navigate to `http://localhost:5173` in your browser.
 
 ## 🌐 Deployment Guide
 
-### Backend on Render
-1. Create a **New Web Service** on [Render](https://render.com).
-2. Connect your GitHub repository (`Ritik639471/Aura-app`).
-3. Set **Root Directory** to `backend`.
-4. Build Command: `npm install`
-5. Start Command: `node server.js`
-6. Supply all backend environment variables from the table above.
+### Backend on AWS EC2 (Docker Compose + Nginx + SSL)
+1. Hosted on an **AWS EC2 Ubuntu Instance** running 24/7 with zero cold starts.
+2. Containerized via **Docker** and reverse-proxied with **Nginx** for full-duplex WebSocket connection upgrades.
+3. Automated TLS/SSL certificate provisioned via **Let's Encrypt / Certbot**.
+4. Live Public API: `https://ritik-chat.duckdns.org`
 
 ### Frontend on Vercel
 1. Import your GitHub repository on [Vercel](https://vercel.com).
 2. Set **Root Directory** to `frontend`.
 3. Framework Preset: `Vite`.
 4. Add environment variables:
-   - `VITE_API_URL=https://aura-app-keg8.onrender.com/api`
-   - `VITE_SOCKET_URL=https://aura-app-keg8.onrender.com`
+   - `VITE_API_URL=https://ritik-chat.duckdns.org/api`
+   - `VITE_SOCKET_URL=https://ritik-chat.duckdns.org`
 5. Deploy!
 
 ---
