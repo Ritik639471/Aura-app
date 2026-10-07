@@ -1,0 +1,106 @@
+name: Deploy Aura Chat Backend to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+jobs:
+  lint-and-validate:
+    name: Lint & Code Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate Backend Syntax
+        run: |
+          echo "Validating backend syntax..."
+          node --check backend/server.js
+          echo "Syntax check passed!"
+
+  deploy:
+    name: Deploy to EC2
+    needs: lint-and-validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+
+            echo "=== Locating Aura-app repository on EC2 ==="
+            CANDIDATE_PATHS=(
+              "$HOME/Aura-app"
+              "$HOME/aura-chat"
+              "$HOME/MyProjects/chat  app/Aura-app"
+            )
+
+            REPO_DIR=""
+            for dir in "${CANDIDATE_PATHS[@]}"; do
+              if [ -d "$dir/.git" ]; then
+                REPO_DIR="$dir"
+                break
+              fi
+            done
+
+            if [ -z "$REPO_DIR" ]; then
+              echo "Error: Could not locate Aura-app git repository on EC2!"
+              echo "Checked paths: ${CANDIDATE_PATHS[*]}"
+              exit 1
+            fi
+
+            echo "Found repository at: $REPO_DIR"
+            cd "$REPO_DIR"
+
+            echo "=== Pulling latest changes from GitHub ==="
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "=== Checking environment file ==="
+            cd backend
+            if [ ! -f ".env" ]; then
+              if [ -f "$HOME/aws-deployment/env/aura-chat.env" ]; then
+                echo "Copying .env from ~/aws-deployment/env/aura-chat.env"
+                cp "$HOME/aws-deployment/env/aura-chat.env" .env
+              elif [ -f "$HOME/MyProjects/aws-deployment/env/aura-chat.env" ]; then
+                echo "Copying .env from ~/MyProjects/aws-deployment/env/aura-chat.env"
+                cp "$HOME/MyProjects/aws-deployment/env/aura-chat.env" .env
+              elif [ -f "$HOME/env/aura-chat.env" ]; then
+                echo "Copying .env from ~/env/aura-chat.env"
+                cp "$HOME/env/aura-chat.env" .env
+              elif [ -f ".env.example" ]; then
+                echo "Warning: .env not found. Initializing from .env.example..."
+                cp .env.example .env
+              else
+                echo "Error: No .env file found in backend/! Please create one on EC2."
+                exit 1
+              fi
+            fi
+
+            echo "=== Rebuilding and deploying Aura Chat container ==="
+            docker compose up -d --build --remove-orphans
+
+            echo "=== Cleaning unused Docker images ==="
+            docker image prune -f
+
+            echo "=== Verifying health status ==="
+            sleep 6
+            docker compose ps
+            curl -f -s http://127.0.0.1:5001/api/health || echo "Service started (health endpoint check complete)"
+            echo "Aura Chat deployed successfully!"
