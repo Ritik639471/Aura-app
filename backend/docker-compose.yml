@@ -1,3 +1,5 @@
+name: aura-chat
+
 services:
   aura-chat:
     build:
